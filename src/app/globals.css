@@ -1,0 +1,39 @@
+﻿@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    --primary: 198.816568 70.711297% 53.137255%;
+    --primary-foreground: 0 0% 100%;
+    --accent: 204 94% 94%;
+    --border: 201 94% 86%;
+    --input: 215 20% 55%;
+    --ring: 201 90% 27%;
+    --popover: 0 0% 100%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 19% 35%;
+  }
+  * {
+    @apply box-border border-border;
+  }
+  body {
+    @apply m-0 bg-background text-foreground;
+  }
+  a {
+    @apply no-underline;
+  }
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
