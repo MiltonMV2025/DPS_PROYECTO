@@ -6,5 +6,6 @@ export type InventoryListItem = { id: number; name: string; category: string; un
 export type SupplierListItem = { id: number; businessName: string; category: string; contact: string | null; phone: string | null; email: string | null; lastPurchase: string | null; status: string };
 export type ClinicalRecordListItem = { id: number; appointmentId: number; patient: string; diagnosis: string; treatment: string; observations: string | null; createdAt: string };
 export type UserListItem = { id: number; name: string; email: string; role: string; active: boolean; lastAccess: string | null };
-export type DashboardMetrics = { appointmentsToday: number; activePatients: number; monthlyRevenue: number; suppliesToRestock: number; occupancy: number; confirmationRate: number; monthlyGoal: number };
+export type StatusBreakdownItem = { estado: string; total: number };
+export type DashboardMetrics = { appointmentsToday: number; activePatients: number; monthlyRevenue: number; suppliesToRestock: number; occupancy: number; confirmationRate: number; monthlyGoal: number; statusBreakdown: StatusBreakdownItem[] };
 export type ListResult<T> = Paginated<T>;
