@@ -1,3 +1,3 @@
-export type { AppointmentController } from "./appointment.controller";
-export type { AppointmentService } from "./appointment.service";
-export type { AppointmentRepository } from "./appointment.repository";
+export { createAppointmentController, type AppointmentController } from "./appointment.controller";
+export { createAppointmentService, type AppointmentService } from "./appointment.service";
+export { createAppointmentWriteRepository, type AppointmentRepository, type ManagedAppointment, type PersonOption } from "./appointment.repository";

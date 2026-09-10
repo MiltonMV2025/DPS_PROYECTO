@@ -1,9 +1,5 @@
-﻿import { PlaceholderPage } from "@/frontend/components/common/PlaceholderPage";
+import { RegisterForm } from "@/frontend/features/auth/RegisterForm";
+
 export default function RegisterPage() {
-  return (
-    <PlaceholderPage
-      title="Crear cuenta"
-      description="Acceso para nuevos usuarios de Sonrisa Digital."
-    />
-  );
+  return <RegisterForm />;
 }
