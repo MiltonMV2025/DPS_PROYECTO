@@ -1,2 +1,2 @@
 /** Domain contracts for authentication. */
-export type AuthTypes = Record<string, never>;
+export type { User as AuthTypes } from "@/backend/database/entities";

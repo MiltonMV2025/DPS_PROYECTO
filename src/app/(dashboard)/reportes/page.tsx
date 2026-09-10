@@ -1,2 +1,6 @@
-import { PlaceholderPage } from "@/frontend/components/common/PlaceholderPage";
-export default function ReportsPage() { return <PlaceholderPage title="Reportes" description="Reportes y métricas de la clínica." />; }
+﻿import { Card, CardContent, CardHeader, CardTitle } from "@/frontend/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/frontend/components/ui/alert";
+import { readServer, serverReadApi } from "@/frontend/lib/server-read";
+export const dynamic = "force-dynamic";
+export default async function ReportsPage() { const result = await readServer(() => serverReadApi().dashboard.get()); const metrics = result.data; return <section className="space-y-6"><div><h1 className="text-3xl font-bold">Reportes</h1><p className="mt-2 text-sm text-slate-600">Métricas operativas reales · Solo lectura</p></div>{result.error ? <Alert variant="error"><AlertTitle>Error de datos</AlertTitle><AlertDescription>{result.error}</AlertDescription></Alert> : <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{[["Citas de hoy", metrics?.appointmentsToday], ["Pacientes activos", metrics?.activePatients], ["Ingresos del mes", `$${(metrics?.monthlyRevenue ?? 0).toLocaleString("en-US")}`], ["Insumos por reponer", metrics?.suppliesToRestock]].map(([label, value]) => <Card key={String(label)}><CardHeader><CardTitle className="text-base">{label}</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{value}</p></CardContent></Card>)}</div>}</section>; }
+

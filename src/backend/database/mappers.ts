@@ -1,0 +1,18 @@
+import type { RowDataPacket } from "mysql2";
+import type { Appointment, AppointmentSupply, ClinicalRecord, Invoice, Patient, Radiograph, Supplier, Supply, User, WaitingListEntry } from "./entities";
+
+type DbRow = RowDataPacket & Record<string, unknown>;
+const date = (value: unknown) => value as Date;
+const nullableDate = (value: unknown) => (value == null ? null : date(value));
+
+export const mapUser = (r: DbRow): User => ({ idUsuario: Number(r.id_usuario), nombre: String(r.nombre), correo: String(r.correo), rol: r.rol as User["rol"], passwordHash: String(r.password_hash), activo: Boolean(r.activo), ultimoAcceso: nullableDate(r.ultimo_acceso), creadoEn: date(r.creado_en) });
+export const mapPatient = (r: DbRow): Patient => ({ idPaciente: Number(r.id_paciente), idUsuario: Number(r.id_usuario), telefono: String(r.telefono), fechaNacimiento: String(r.fecha_nacimiento), alergias: r.alergias == null ? null : String(r.alergias), creadoEn: date(r.creado_en) });
+export const mapSupplier = (r: DbRow): Supplier => ({ idProveedor: Number(r.id_proveedor), razonSocial: String(r.razon_social), categoria: String(r.categoria), contacto: r.contacto == null ? null : String(r.contacto), telefono: r.telefono == null ? null : String(r.telefono), correo: r.correo == null ? null : String(r.correo), ultimaCompra: r.ultima_compra == null ? null : String(r.ultima_compra), estado: r.estado as Supplier["estado"] });
+export const mapSupply = (r: DbRow): Supply => ({ idInsumo: Number(r.id_insumo), nombre: String(r.nombre), categoria: String(r.categoria), unidadMedida: String(r.unidad_medida), stockActual: Number(r.stock_actual), stockMinimo: Number(r.stock_minimo), idProveedor: r.id_proveedor == null ? null : Number(r.id_proveedor) });
+export const mapAppointment = (r: DbRow): Appointment => ({ idCita: Number(r.id_cita), idPaciente: Number(r.id_paciente), idOdontologo: Number(r.id_odontologo), fechaHora: date(r.fecha_hora), duracionMin: Number(r.duracion_min) as Appointment["duracionMin"], motivo: r.motivo == null ? null : String(r.motivo), estado: r.estado as Appointment["estado"], creadoEn: date(r.creado_en) });
+export const mapWaitingListEntry = (r: DbRow): WaitingListEntry => ({ idEspera: Number(r.id_espera), idPaciente: Number(r.id_paciente), fechaDeseada: String(r.fecha_deseada), franja: r.franja as WaitingListEntry["franja"], motivo: r.motivo == null ? null : String(r.motivo), prioridad: Number(r.prioridad), estado: r.estado as WaitingListEntry["estado"], notificadoEn: nullableDate(r.notificado_en), idCitaAsignada: r.id_cita_asignada == null ? null : Number(r.id_cita_asignada), creadoEn: date(r.creado_en) });
+export const mapClinicalRecord = (r: DbRow): ClinicalRecord => ({ idHistorial: Number(r.id_historial), idCita: Number(r.id_cita), diagnostico: String(r.diagnostico), tratamiento: String(r.tratamiento), observaciones: r.observaciones == null ? null : String(r.observaciones), creadoEn: date(r.creado_en) });
+export const mapRadiograph = (r: DbRow): Radiograph => ({ idRadiografia: Number(r.id_radiografia), idHistorial: Number(r.id_historial), urlArchivo: String(r.url_archivo), descripcion: r.descripcion == null ? null : String(r.descripcion), fecha: String(r.fecha) });
+export const mapAppointmentSupply = (r: DbRow): AppointmentSupply => ({ idDetalle: Number(r.id_detalle), idCita: Number(r.id_cita), idInsumo: Number(r.id_insumo), cantidad: Number(r.cantidad) });
+export const mapInvoice = (r: DbRow): Invoice => ({ idFactura: Number(r.id_factura), idCita: Number(r.id_cita), montoTotal: Number(r.monto_total), metodoPago: r.metodo_pago as Invoice["metodoPago"], estado: r.estado as Invoice["estado"], fechaEmision: date(r.fecha_emision) });
+

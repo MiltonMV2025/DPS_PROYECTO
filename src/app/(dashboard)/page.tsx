@@ -15,41 +15,44 @@ import {
   CardTitle,
 } from "@/frontend/components/ui/card";
 import { Progress } from "@/frontend/components/ui/progress";
-import { AppointmentsTable } from "@/frontend/features/appointments/components/AppointmentsTable";
+import { RealAppointmentsTable } from "@/frontend/features/appointments/components/AppointmentsTable";
+import { readServer, serverReadApi } from "@/frontend/lib/server-read";
+import { Alert, AlertDescription, AlertTitle } from "@/frontend/components/ui/alert";
 
-const metrics = [
+const metricLabels = [
   {
     label: "Citas de hoy",
-    value: "24",
-    detail: "+12% vs. ayer",
+    key: "appointmentsToday" as const,
+    detail: "Citas no canceladas",
     icon: CalendarDays,
   },
   {
     label: "Pacientes activos",
-    value: "1,248",
-    detail: "+8% este mes",
+    key: "activePatients" as const,
+    detail: "Usuarios activos con ficha",
     icon: Users,
   },
   {
     label: "Ingresos del mes",
-    value: "$18,450",
-    detail: "+16% vs. mes anterior",
+    key: "monthlyRevenue" as const,
+    detail: "Facturación pagada",
     icon: Activity,
   },
   {
     label: "Insumos por reponer",
-    value: "7",
-    detail: "Requieren atención",
+    key: "suppliesToRestock" as const,
+    detail: "Stock bajo el mínimo",
     icon: Package,
   },
 ];
-const indicators = [
-  { label: "Ocupación de agenda", value: 78 },
-  { label: "Confirmación de citas", value: 64 },
-  { label: "Meta mensual", value: 91 },
-];
-
-export default function DashboardPage() {
+export const dynamic = "force-dynamic";
+export default async function DashboardPage() {
+  const api = serverReadApi();
+  const [dashboard, appointments] = await Promise.all([
+    readServer(() => api.dashboard.get()),
+    readServer(() => api.appointments.list()),
+  ]);
+  const metrics = dashboard.data;
   return (
     <div className="w-full min-w-0 space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
@@ -59,7 +62,7 @@ export default function DashboardPage() {
           </p>
           <h1 className="mt-1 text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="mt-2 text-sm text-slate-600">
-            Una vista rápida de Sonrisa Digital · Datos de demostración
+            Una vista rápida de Sonrisa Digital · Datos reales de solo lectura
           </p>
         </div>
         <Button asChild>
@@ -74,12 +77,12 @@ export default function DashboardPage() {
           Análisis rápido
         </h2>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {metrics.map(({ label, value, detail, icon: Icon }) => (
+          {metricLabels.map(({ label, key, detail, icon: Icon }) => (
             <Card key={label}>
               <CardContent className="flex items-start justify-between gap-3 pt-6">
                 <div>
                   <p className="text-sm text-slate-600">{label}</p>
-                  <p className="mt-2 text-2xl font-bold">{value}</p>
+                  <p className="mt-2 text-2xl font-bold">{key === "monthlyRevenue" ? `$${(metrics?.[key] ?? 0).toLocaleString("en-US")}` : (metrics?.[key] ?? 0).toLocaleString("es-SV")}</p>
                   <p className="mt-1 text-xs text-slate-600">{detail}</p>
                 </div>
                 <div className="rounded-lg bg-primary-light p-2.5 text-primary">
@@ -89,15 +92,16 @@ export default function DashboardPage() {
             </Card>
           ))}
         </div>
+        {dashboard.error && <Alert variant="error"><AlertTitle>Error de métricas</AlertTitle><AlertDescription>{dashboard.error}</AlertDescription></Alert>}
         <Card>
           <CardHeader>
             <CardTitle>Análisis operativo</CardTitle>
             <CardDescription>
-              Indicadores de seguimiento de ejemplo
+              Indicadores calculados desde la base de datos
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-6 md:grid-cols-3">
-            {indicators.map(({ label, value }) => (
+            {[{ label: "Ocupación de agenda", value: metrics?.occupancy ?? 0 }, { label: "Confirmación de citas", value: metrics?.confirmationRate ?? 0 }].map(({ label, value }) => (
               <div key={label}>
                 <div className="mb-2 flex justify-between gap-3 text-sm">
                   <span className="text-slate-600">{label}</span>
@@ -113,10 +117,10 @@ export default function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle id="appointments-title">Próximas citas</CardTitle>
-            <CardDescription>Agenda de ejemplo · Solo lectura</CardDescription>
+            <CardDescription>Próximas citas no canceladas · Solo lectura</CardDescription>
           </CardHeader>
           <CardContent>
-            <AppointmentsTable />
+            {appointments.error ? <Alert variant="error"><AlertTitle>Error de datos</AlertTitle><AlertDescription>{appointments.error}</AlertDescription></Alert> : <RealAppointmentsTable appointments={appointments.data?.items ?? []} />}
           </CardContent>
         </Card>
       </section>

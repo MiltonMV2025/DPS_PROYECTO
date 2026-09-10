@@ -1,2 +1,2 @@
 /** Domain contracts for patients. */
-export type PatientTypes = Record<string, never>;
+export type { Patient as PatientTypes } from "@/backend/database/entities";

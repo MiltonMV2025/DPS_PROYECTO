@@ -1,2 +1,2 @@
-/** Server configuration boundary. Add validated environment access here later. */
-export {};
+export { getDatabaseConfig, parseDatabaseUrl } from "./env";
+export type { DatabaseConfig } from "./env";

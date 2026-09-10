@@ -1,2 +1,2 @@
 /** Domain contracts for suppliers. */
-export type SupplierTypes = Record<string, never>;
+export type { Supplier as SupplierTypes } from "@/backend/database/entities";

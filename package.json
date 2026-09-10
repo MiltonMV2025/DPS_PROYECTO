@@ -10,7 +10,9 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test:ui": "playwright test"
+    "test:ui": "playwright test",
+    "db:migrate": "node scripts/database.mjs",
+    "db:seed": "node scripts/database.mjs --seed"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.23",
@@ -20,9 +22,11 @@
     "clsx": "^2.1.1",
     "lottie-react": "^3.1.2",
     "lucide-react": "^0.468.0",
+    "mysql2": "^3.24.4",
     "next": "^15.5.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "server-only": "^0.0.1",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7"
   },

@@ -1,2 +1,3 @@
 /** Persistence boundary for suppliers. */
-export type SupplierRepository = Record<string, never>;
+export type { Repository as SupplierRepository } from "@/backend/database/repository";
+export { createSupplierRepository } from "@/backend/database/mysql-repositories";

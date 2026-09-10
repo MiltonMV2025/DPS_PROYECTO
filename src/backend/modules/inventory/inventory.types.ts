@@ -1,2 +1,2 @@
 /** Domain contracts for inventory. */
-export type InventoryTypes = Record<string, never>;
+export type { Supply as InventoryTypes } from "@/backend/database/entities";

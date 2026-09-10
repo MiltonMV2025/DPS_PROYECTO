@@ -1,2 +1,3 @@
 /** Persistence boundary for clinical records. */
-export type ClinicalRecordRepository = Record<string, never>;
+export type { Repository as ClinicalRecordRepository } from "@/backend/database/repository";
+export { createClinicalRecordRepository } from "@/backend/database/mysql-repositories";

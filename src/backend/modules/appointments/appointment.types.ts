@@ -1,2 +1,3 @@
 /** Domain contracts for appointments. */
-export type AppointmentTypes = Record<string, never>;
+export type { Appointment } from "@/backend/database/entities";
+export type AppointmentTypes = import("@/backend/database/entities").Appointment;

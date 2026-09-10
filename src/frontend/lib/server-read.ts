@@ -1,0 +1,8 @@
+﻿import "server-only";
+import type { ApiResponse, Paginated } from "@/shared/types";
+import type { AppointmentListItem, ClinicalRecordListItem, DashboardMetrics, InventoryListItem, PatientListItem, SupplierListItem, UserListItem } from "@/backend/modules/read-models";
+const baseUrl = process.env.INTERNAL_API_BASE_URL ?? "http://127.0.0.1:3000";
+const headers = { "x-internal-api-key": process.env.INTERNAL_API_SECRET ?? "" };
+async function get<T>(path: string): Promise<ApiResponse<T>> { const response = await fetch(`${baseUrl}${path}`, { headers, cache: "no-store" }); if (!response.ok) throw new Error(`Internal API returned ${response.status}`); return response.json() as Promise<ApiResponse<T>>; }
+export async function readServer<T>(action: () => Promise<{ data: T }>): Promise<{ data: T; error?: undefined } | { data: null; error: string }> { try { const result = await action(); if (!result?.data) throw new Error("empty response"); return result; } catch { return { data: null, error: "No se pudo consultar la información. Verificá la configuración interna o intentá nuevamente más tarde." }; } }
+export const serverReadApi = () => ({ appointments: { list: () => get<Paginated<AppointmentListItem>>("/api/v1/appointments") }, patients: { list: () => get<Paginated<PatientListItem>>("/api/v1/patients") }, inventory: { list: () => get<Paginated<InventoryListItem>>("/api/v1/inventory") }, suppliers: { list: () => get<Paginated<SupplierListItem>>("/api/v1/suppliers") }, clinicalRecords: { list: () => get<Paginated<ClinicalRecordListItem>>("/api/v1/clinical-records") }, users: { list: () => get<Paginated<UserListItem>>("/api/v1/users") }, dashboard: { get: () => get<DashboardMetrics>("/api/v1/reports/dashboard") } });

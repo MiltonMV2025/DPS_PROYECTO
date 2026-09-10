@@ -1,2 +1,3 @@
 /** Persistence boundary for appointments. */
-export type AppointmentRepository = Record<string, never>;
+export type { Repository as AppointmentRepository } from "@/backend/database/repository";
+export { createAppointmentRepository } from "@/backend/database/mysql-repositories";

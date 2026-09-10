@@ -22,6 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/frontend/components/ui/dialog";
+import type { AppointmentListItem } from "@/backend/modules/read-models";
 
 type AppointmentRow = {
   id: string;
@@ -30,43 +31,6 @@ type AppointmentRow = {
   service: string;
   status: "Confirmada" | "Pendiente" | "Cancelada";
 };
-const appointments: AppointmentRow[] = [
-  {
-    id: "demo-1",
-    time: "08:30",
-    patient: "Ana Martínez",
-    service: "Limpieza dental",
-    status: "Confirmada",
-  },
-  {
-    id: "demo-2",
-    time: "10:00",
-    patient: "Carlos López",
-    service: "Consulta general",
-    status: "Pendiente",
-  },
-  {
-    id: "demo-3",
-    time: "11:30",
-    patient: "Sofía Hernández",
-    service: "Control de ortodoncia",
-    status: "Confirmada",
-  },
-  {
-    id: "demo-4",
-    time: "15:00",
-    patient: "Miguel Rivera",
-    service: "Evaluación inicial",
-    status: "Pendiente",
-  },
-  {
-    id: "demo-5",
-    time: "16:00",
-    patient: "Lucía Torres",
-    service: "Consulta general",
-    status: "Cancelada",
-  },
-];
 const statusVariants = {
   Confirmada: "success",
   Pendiente: "info",
@@ -145,7 +109,7 @@ const columns: DataTableColumn<AppointmentRow>[] = [
     cell: (_value, row) => <AppointmentDetails appointment={row} />,
   },
 ];
-export function AppointmentsTable() {
+function AppointmentsTableContent({ appointments }: { appointments: AppointmentRow[] }) {
   return (
     <DataTable
       columns={columns}
@@ -169,4 +133,15 @@ export function AppointmentsTable() {
       rowLabel="citas"
     />
   );
+}
+
+export function RealAppointmentsTable({ appointments }: { appointments: AppointmentListItem[] }) {
+  const rows: AppointmentRow[] = appointments.map((appointment) => ({
+    id: String(appointment.id),
+    time: new Date(appointment.dateTime).toLocaleTimeString("es-SV", { hour: "2-digit", minute: "2-digit" }),
+    patient: appointment.patient,
+    service: appointment.service || "Consulta",
+    status: appointment.status === "confirmada" ? "Confirmada" : appointment.status === "cancelada" ? "Cancelada" : "Pendiente",
+  }));
+  return <AppointmentsTableContent appointments={rows} />;
 }

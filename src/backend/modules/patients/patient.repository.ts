@@ -1,2 +1,3 @@
 /** Persistence boundary for patients. */
-export type PatientRepository = Record<string, never>;
+export type { Repository as PatientRepository } from "@/backend/database/repository";
+export { createPatientRepository } from "@/backend/database/mysql-repositories";
