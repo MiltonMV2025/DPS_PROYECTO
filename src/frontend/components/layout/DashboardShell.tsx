@@ -7,6 +7,7 @@ import {
   CalendarDays,
   ClipboardList,
   LayoutDashboard,
+  LogOut,
   Menu,
   Package,
   PanelLeftClose,
@@ -27,16 +28,18 @@ import {
   SheetTrigger,
 } from "@/frontend/components/ui/sheet";
 import { cn } from "@/frontend/lib/utils";
+import { useAuth } from "@/frontend/features/auth/AuthContext";
+import { canAccess, type ModuleKey } from "@/frontend/features/auth/permissions";
 
-const navigation = [
-  { label: "Dashboard", href: "/", icon: LayoutDashboard },
-  { label: "Citas", href: "/citas", icon: CalendarDays },
-  { label: "Pacientes", href: "/pacientes", icon: Users },
-  { label: "Historiales", href: "/historiales", icon: ClipboardList },
-  { label: "Inventario", href: "/inventario", icon: Package },
-  { label: "Reportes", href: "/reportes", icon: ChartNoAxesCombined },
-  { label: "Usuarios", href: "/usuarios", icon: UserRoundCog },
-  { label: "Proveedores", href: "/proveedores", icon: Truck },
+const navigation: { label: string; href: string; icon: typeof LayoutDashboard; key: ModuleKey }[] = [
+  { label: "Dashboard", href: "/", icon: LayoutDashboard, key: "dashboard" },
+  { label: "Citas", href: "/citas", icon: CalendarDays, key: "citas" },
+  { label: "Pacientes", href: "/pacientes", icon: Users, key: "pacientes" },
+  { label: "Historiales", href: "/historiales", icon: ClipboardList, key: "historiales" },
+  { label: "Inventario", href: "/inventario", icon: Package, key: "inventario" },
+  { label: "Reportes", href: "/reportes", icon: ChartNoAxesCombined, key: "reportes" },
+  { label: "Usuarios", href: "/usuarios", icon: UserRoundCog, key: "usuarios" },
+  { label: "Proveedores", href: "/proveedores", icon: Truck, key: "proveedores" },
 ];
 
 function Navigation({
@@ -47,9 +50,11 @@ function Navigation({
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
+  const { user } = useAuth();
+  const items = user ? navigation.filter((item) => canAccess(user.rol, item.key)) : [];
   return (
     <nav aria-label="Navegación principal" className="space-y-1">
-      {navigation.map(({ label, href, icon: Icon }) => (
+      {items.map(({ label, href, icon: Icon }) => (
         <Link
           key={href}
           href={href}
@@ -69,6 +74,30 @@ function Navigation({
         </Link>
       ))}
     </nav>
+  );
+}
+
+const roleLabels: Record<string, string> = {
+  administrador: "Administrador",
+  odontologo: "Odontólogo",
+  recepcionista: "Recepcionista",
+  paciente: "Paciente",
+};
+
+function UserMenu() {
+  const { user, logout } = useAuth();
+  if (!user) return null;
+  return (
+    <div className="ml-auto flex items-center gap-3">
+      <div className="hidden text-right sm:block">
+        <p className="text-sm font-medium text-slate-700">{user.nombre}</p>
+        <p className="text-xs text-slate-500">{roleLabels[user.rol] ?? user.rol}</p>
+      </div>
+      <Button variant="outline" size="sm" onClick={() => logout()}>
+        <LogOut aria-hidden="true" className="h-4 w-4" />
+        <span className="hidden sm:inline">Salir</span>
+      </Button>
+    </div>
   );
 }
 
@@ -158,9 +187,7 @@ export function DashboardShell({
           <span className="font-semibold text-slate-700">
             Panel administrativo
           </span>
-          <span className="ml-auto hidden text-sm text-slate-600 sm:block">
-            Sonrisa Digital
-          </span>
+          <UserMenu />
         </header>
         <main
           id="main-content"
