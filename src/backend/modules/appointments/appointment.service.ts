@@ -32,6 +32,15 @@ export function createAppointmentService(
   return {
     list: () => repository.listUpcoming(),
 
+    async manage() {
+      const [appointments, patients, dentists] = await Promise.all([
+        repository.listUpcoming(),
+        repository.listPatientOptions(),
+        repository.listDentistOptions(),
+      ]);
+      return { appointments, patients, dentists };
+    },
+
     async create(input: CreateAppointmentInput): Promise<number> {
       if (!(await repository.patientExists(input.idPaciente))) {
         throw new ApplicationError("PATIENT_NOT_FOUND", "El paciente seleccionado no existe.", 400);

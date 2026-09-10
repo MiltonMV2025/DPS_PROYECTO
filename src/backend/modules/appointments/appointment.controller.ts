@@ -8,6 +8,9 @@ export function createAppointmentController(service: AppointmentService = create
     list(): Promise<ManagedAppointment[]> {
       return service.list();
     },
+    manage() {
+      return service.manage();
+    },
     create(raw: unknown): Promise<number> {
       return service.create(parseInput(createAppointmentSchema, raw));
     },

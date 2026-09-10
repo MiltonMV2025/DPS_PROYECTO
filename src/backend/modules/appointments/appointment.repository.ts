@@ -22,6 +22,8 @@ export type ManagedAppointment = {
   estado: AppointmentStatus;
 };
 
+export type PersonOption = { id: number; name: string };
+
 type ManagedRow = RowDataPacket & Record<string, unknown>;
 type CountRow = RowDataPacket & { total: number };
 
@@ -52,6 +54,25 @@ export function createAppointmentWriteRepository(pool: Pool = getDatabasePool())
         motivo: row.motivo == null ? null : String(row.motivo),
         estado: row.estado as AppointmentStatus,
       }));
+    },
+
+    async listPatientOptions(): Promise<PersonOption[]> {
+      const [rows] = await pool.query<ManagedRow[]>(
+        `SELECT p.id_paciente AS id, u.nombre AS name
+         FROM Pacientes p JOIN Usuarios u ON u.id_usuario = p.id_usuario
+         ORDER BY u.nombre`,
+      );
+      return rows.map((row) => ({ id: Number(row.id), name: String(row.name) }));
+    },
+
+    async listDentistOptions(): Promise<PersonOption[]> {
+      const [rows] = await pool.query<ManagedRow[]>(
+        `SELECT id_usuario AS id, nombre AS name
+         FROM Usuarios
+         WHERE rol IN ('odontologo','administrador') AND activo = TRUE
+         ORDER BY nombre`,
+      );
+      return rows.map((row) => ({ id: Number(row.id), name: String(row.name) }));
     },
 
     async patientExists(idPaciente: number): Promise<boolean> {
