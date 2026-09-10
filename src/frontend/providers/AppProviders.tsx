@@ -1,2 +1,6 @@
 import type { ReactNode } from "react";
-export function AppProviders({ children }: Readonly<{ children: ReactNode }>) { return children; }
+import { AuthProvider, type AuthUser } from "@/frontend/features/auth/AuthContext";
+
+export function AppProviders({ user, children }: Readonly<{ user: AuthUser | null; children: ReactNode }>) {
+  return <AuthProvider initialUser={user}>{children}</AuthProvider>;
+}
