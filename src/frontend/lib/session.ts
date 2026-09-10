@@ -8,6 +8,8 @@ import {
   verifySessionToken,
 } from "@/backend/modules/auth";
 import type { SessionUser } from "@/backend/modules/auth";
+import type { UserRole } from "@/backend/database/entities";
+import { ApplicationError } from "@/backend/errors";
 import { canAccess, type ModuleKey } from "@/frontend/features/auth/permissions";
 
 export async function getCurrentUser(): Promise<SessionUser | null> {
@@ -26,6 +28,18 @@ export async function requireModule(moduleKey: ModuleKey): Promise<SessionUser> 
   const user = await requireUser();
   if (!canAccess(user.rol, moduleKey)) redirect("/");
   return user;
+}
+
+export async function requireApiUser(): Promise<SessionUser> {
+  const user = await getCurrentUser();
+  if (!user) throw new ApplicationError("UNAUTHENTICATED", "No autenticado.", 401);
+  return user;
+}
+
+export function requireApiRoles(user: SessionUser, roles: UserRole[]): void {
+  if (!roles.includes(user.rol)) {
+    throw new ApplicationError("FORBIDDEN", "No tenés permisos para esta acción.", 403);
+  }
 }
 
 export async function startSession(user: SessionUser): Promise<void> {
