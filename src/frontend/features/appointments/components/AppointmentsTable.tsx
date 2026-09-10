@@ -1,11 +1,6 @@
 ﻿"use client";
 
-import { Eye, Info } from "lucide-react";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/frontend/components/ui/alert";
+import { Eye } from "lucide-react";
 import { Badge } from "@/frontend/components/ui/badge";
 import { Button } from "@/frontend/components/ui/button";
 import {
@@ -29,12 +24,11 @@ type AppointmentRow = {
   time: string;
   patient: string;
   service: string;
-  status: "Confirmada" | "Pendiente" | "Cancelada";
+  status: "Confirmada" | "Pendiente";
 };
 const statusVariants = {
   Confirmada: "success",
   Pendiente: "info",
-  Cancelada: "error",
 } as const;
 
 function AppointmentDetails({ appointment }: { appointment: AppointmentRow }) {
@@ -54,7 +48,7 @@ function AppointmentDetails({ appointment }: { appointment: AppointmentRow }) {
         <DialogHeader>
           <DialogTitle>Detalle de cita</DialogTitle>
           <DialogDescription>
-            Información de ejemplo de la agenda. Solo lectura.
+            Información de la cita. Solo lectura.
           </DialogDescription>
         </DialogHeader>
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-3 text-sm">
@@ -71,14 +65,6 @@ function AppointmentDetails({ appointment }: { appointment: AppointmentRow }) {
             </Badge>
           </dd>
         </dl>
-        <Alert>
-          <Info aria-hidden="true" />
-          <AlertTitle>Vista de demostración</AlertTitle>
-          <AlertDescription>
-            Estos datos son ficticios. No se registran ni modifican citas desde
-            esta vista.
-          </AlertDescription>
-        </Alert>
         <DialogFooter>
           <DialogClose asChild>
             <Button>Cerrar detalle</Button>
@@ -115,7 +101,7 @@ function AppointmentsTableContent({ appointments }: { appointments: AppointmentR
       columns={columns}
       data={appointments}
       getRowId={(row) => row.id}
-      caption="Citas de demostración"
+      caption="Citas"
       searchKeys={["patient", "service"]}
       searchPlaceholder="Buscar paciente o servicio..."
       filters={[
@@ -126,7 +112,6 @@ function AppointmentsTableContent({ appointments }: { appointments: AppointmentR
           options: [
             { label: "Confirmadas", value: "Confirmada" },
             { label: "Pendientes", value: "Pendiente" },
-            { label: "Canceladas", value: "Cancelada" },
           ],
         },
       ]}
@@ -141,7 +126,7 @@ export function RealAppointmentsTable({ appointments }: { appointments: Appointm
     time: new Date(appointment.dateTime).toLocaleTimeString("es-SV", { hour: "2-digit", minute: "2-digit" }),
     patient: appointment.patient,
     service: appointment.service || "Consulta",
-    status: appointment.status === "confirmada" ? "Confirmada" : appointment.status === "cancelada" ? "Cancelada" : "Pendiente",
+    status: appointment.status === "confirmada" ? "Confirmada" : "Pendiente",
   }));
   return <AppointmentsTableContent appointments={rows} />;
 }
