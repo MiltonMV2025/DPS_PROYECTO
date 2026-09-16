@@ -1,2 +1,4 @@
 /** Input validation contracts for notifications. */
-export type NotificationSchema = Record<string, never>;
+import { z } from "zod";
+
+export const notificationIdSchema = z.coerce.number().int().positive();

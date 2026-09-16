@@ -17,6 +17,7 @@ import {
   Users,
   UserRoundCog,
   ChartNoAxesCombined,
+  UserCircle,
 } from "lucide-react";
 import { Button } from "@/frontend/components/ui/button";
 import {
@@ -30,9 +31,11 @@ import {
 import { cn } from "@/frontend/lib/utils";
 import { useAuth } from "@/frontend/features/auth/AuthContext";
 import { canAccess, type ModuleKey } from "@/frontend/features/auth/permissions";
+import { NotificationBell } from "./NotificationBell";
 
 const navigation: { label: string; href: string; icon: typeof LayoutDashboard; key: ModuleKey }[] = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard, key: "dashboard" },
+  { label: "Mi perfil", href: "/mi-perfil", icon: UserCircle, key: "mi-perfil" },
   { label: "Citas", href: "/citas", icon: CalendarDays, key: "citas" },
   { label: "Pacientes", href: "/pacientes", icon: Users, key: "pacientes" },
   { label: "Historiales", href: "/historiales", icon: ClipboardList, key: "historiales" },
@@ -89,6 +92,7 @@ function UserMenu() {
   if (!user) return null;
   return (
     <div className="ml-auto flex items-center gap-3">
+      <NotificationBell />
       <div className="hidden text-right sm:block">
         <p className="text-sm font-medium text-slate-700">{user.nombre}</p>
         <p className="text-xs text-slate-500">{roleLabels[user.rol] ?? user.rol}</p>
@@ -104,6 +108,7 @@ function UserMenu() {
 export function DashboardShell({
   children,
 }: Readonly<{ children: ReactNode }>) {
+  const { user } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   useEffect(() => {
@@ -185,7 +190,7 @@ export function DashboardShell({
             </SheetContent>
           </Sheet>
           <span className="font-semibold text-slate-700">
-            Panel administrativo
+            {user?.rol === "paciente" ? "Portal del paciente" : "Panel administrativo"}
           </span>
           <UserMenu />
         </header>

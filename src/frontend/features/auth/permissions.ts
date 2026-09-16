@@ -2,6 +2,7 @@ import type { UserRole } from "@/backend/database/entities";
 
 export type ModuleKey =
   | "dashboard"
+  | "mi-perfil"
   | "citas"
   | "pacientes"
   | "historiales"
@@ -14,7 +15,8 @@ const ALL: UserRole[] = ["administrador", "odontologo", "recepcionista", "pacien
 const STAFF: UserRole[] = ["administrador", "odontologo", "recepcionista"];
 
 export const modulePermissions: Record<ModuleKey, UserRole[]> = {
-  dashboard: ALL,
+  dashboard: STAFF,
+  "mi-perfil": ["paciente"],
   citas: ALL,
   pacientes: STAFF,
   historiales: ["administrador", "odontologo"],

@@ -1,5 +1,5 @@
-import { createReadApi } from "@/backend/modules/read-api";
 import { createAppointmentController } from "@/backend/modules/appointments";
+import { createReadApi } from "@/backend/modules/read-api";
 import { requireApiRoles, requireApiUser } from "@/frontend/lib/session";
 import { handleGet, handleWrite, readJson, requireInternalApiKey } from "../_http";
 
@@ -9,8 +9,12 @@ const STAFF = ["administrador", "recepcionista", "odontologo"] as const;
 
 export function GET(request: Request) {
   return handleGet(async () => {
-    requireInternalApiKey(request);
-    return createReadApi().appointments.list();
+    if (request.headers.get("x-internal-api-key")) {
+      requireInternalApiKey(request);
+      return createReadApi().appointments.list();
+    }
+    const user = await requireApiUser();
+    return createAppointmentController().list(user.rol === "paciente" ? user.id : undefined);
   });
 }
 

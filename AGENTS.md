@@ -69,6 +69,8 @@ consulta. No agregar ORMs ni integraciones externas sin justificarlo.
 
 ## Colaboración
 
+- Los mensajes de resultado de acciones (éxito, error o información) deben usar el componente reutilizable `ToastAlert` desde `src/frontend/components/common/ToastAlert.tsx`, fijo en la esquina inferior derecha, con cierre manual y autocierre.
+
 - Crear ramas desde `develop`.
 - Usar `feature/*`, `fix/*` o `chore/*`.
 - Abrir Pull Requests hacia `develop`.

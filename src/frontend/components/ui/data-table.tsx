@@ -206,9 +206,11 @@ export function DataTable<T extends Record<string, unknown>>({
               </Select>
             </div>
           ))}
-          <Button variant="ghost" disabled={!hasFilters} onClick={clearFilters}>
-            Limpiar filtros
-          </Button>
+          {(searchKeys.length > 0 || filters.length > 0) && (
+            <Button variant="ghost" disabled={!hasFilters} onClick={clearFilters}>
+              Limpiar filtros
+            </Button>
+          )}
         </div>
       </div>
       <div className="hidden overflow-hidden rounded-lg border border-primary-border md:block">

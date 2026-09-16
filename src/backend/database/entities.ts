@@ -12,8 +12,7 @@ export type Supplier = { idProveedor: number; razonSocial: string; categoria: st
 export type Supply = { idInsumo: number; nombre: string; categoria: string; unidadMedida: string; stockActual: number; stockMinimo: number; idProveedor: number | null };
 export type Appointment = { idCita: number; idPaciente: number; idOdontologo: number; fechaHora: Date; duracionMin: 30 | 45 | 60; motivo: string | null; estado: AppointmentStatus; creadoEn: Date };
 export type WaitingListEntry = { idEspera: number; idPaciente: number; fechaDeseada: string; franja: WaitingListSlot; motivo: string | null; prioridad: number; estado: WaitingListStatus; notificadoEn: Date | null; idCitaAsignada: number | null; creadoEn: Date };
-export type ClinicalRecord = { idHistorial: number; idCita: number; diagnostico: string; tratamiento: string; observaciones: string | null; creadoEn: Date };
+export type ClinicalRecord = { idHistorial: number; idCita: number; diagnostico: string; tratamiento: string; observaciones: string | null; receta: string | null; recomendaciones: string | null; creadoEn: Date };
 export type Radiograph = { idRadiografia: number; idHistorial: number; urlArchivo: string; descripcion: string | null; fecha: string };
 export type AppointmentSupply = { idDetalle: number; idCita: number; idInsumo: number; cantidad: number };
 export type Invoice = { idFactura: number; idCita: number; montoTotal: number; metodoPago: PaymentMethod; estado: InvoiceStatus; fechaEmision: Date };
-
