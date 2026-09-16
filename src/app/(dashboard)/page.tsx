@@ -18,6 +18,8 @@ import { Progress } from "@/frontend/components/ui/progress";
 import { RealAppointmentsTable } from "@/frontend/features/appointments/components/AppointmentsTable";
 import { readServer, serverReadApi } from "@/frontend/lib/server-read";
 import { Alert, AlertDescription, AlertTitle } from "@/frontend/components/ui/alert";
+import { requireUser } from "@/frontend/lib/session";
+import { redirect } from "next/navigation";
 
 const metricLabels = [
   {
@@ -47,11 +49,12 @@ const metricLabels = [
 ];
 export const dynamic = "force-dynamic";
 export default async function DashboardPage() {
+  const user = await requireUser();
+  if (user.rol === "paciente") redirect("/citas");
   const api = serverReadApi();
-  const [dashboard, appointments] = await Promise.all([
-    readServer(() => api.dashboard.get()),
-    readServer(() => api.appointments.list()),
-  ]);
+  const dashboardPromise = readServer(() => api.dashboard.get());
+  const appointmentsPromise = readServer(() => api.appointments.list());
+  const [dashboard, appointments] = await Promise.all([dashboardPromise, appointmentsPromise]);
   const metrics = dashboard.data;
   return (
     <div className="w-full min-w-0 space-y-6">

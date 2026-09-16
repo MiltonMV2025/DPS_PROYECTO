@@ -5,11 +5,11 @@ import type { ManagedAppointment } from "./appointment.repository";
 
 export function createAppointmentController(service: AppointmentService = createAppointmentService()) {
   return {
-    list(): Promise<ManagedAppointment[]> {
-      return service.list();
+    list(userId?: number): Promise<ManagedAppointment[]> {
+      return service.list(userId);
     },
-    manage() {
-      return service.manage();
+    manage(patientUserId?: number) {
+      return service.manage(patientUserId);
     },
     create(raw: unknown): Promise<number> {
       return service.create(parseInput(createAppointmentSchema, raw));

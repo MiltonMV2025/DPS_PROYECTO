@@ -22,6 +22,12 @@ export const createAppointmentSchema = z.object({
 
 export const updateAppointmentSchema = z.object({
   estado: z.enum(["confirmada", "completada", "cancelada"]),
+  observaciones: z.string().trim().max(5000).optional(),
+  receta: z.string().trim().max(5000).optional(),
+  recomendaciones: z.string().trim().max(5000).optional(),
+}).superRefine((value, context) => {
+  if (value.estado !== "completada") return;
+  if (!value.observaciones) context.addIssue({ code: z.ZodIssueCode.custom, path: ["observaciones"], message: "Las observaciones son obligatorias al completar la cita." });
 });
 
 export type CreateAppointmentInput = z.infer<typeof createAppointmentSchema>;
