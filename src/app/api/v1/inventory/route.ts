@@ -1,4 +1,4 @@
-﻿import { createReadApi } from "@/backend/modules/read-api";
+import { createReadApi } from "@/backend/modules/read-api";
 import { parseInput } from "@/backend/utils";
 import { createInventoryService } from "@/backend/modules/inventory/inventory.service";
 import { createSchema, deleteSchema, updateSchema } from "@/backend/modules/inventory/inventory.schema";
@@ -37,7 +37,7 @@ export function PUT(request: Request) {
 export function DELETE(request: Request) {
   return handleWrite(async () => {
     const user = await requireApiUser();
-    requireApiRoles(user, ["administrador"]);
+    requireApiRoles(user, [...STAFF]);
     const { id } = parseInput(deleteSchema, await readJson(request));
     await createInventoryService().remove(id);
     return { deleted: true };
