@@ -1,2 +1,2 @@
-export { getDatabaseConfig, parseDatabaseUrl } from "./env";
+export { getDatabaseConfig, getAuthSecret, parseDatabaseUrl } from "./env";
 export type { DatabaseConfig } from "./env";

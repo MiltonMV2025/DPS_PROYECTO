@@ -23,4 +23,11 @@ Los Route Handlers serán adaptadores HTTP delgados. El controller coordinará l
 4. `shared` solo contiene piezas sin conocimiento de infraestructura o UI.
 5. Los módulos se mantienen delimitados para reducir conflictos entre integrantes.
 
-La autenticación, autorización, ORM y modelo de datos se incorporarán en etapas posteriores.
+## Autenticación y autorización
+
+Las sesiones se firman como JWT (`jose`) y viajan en una cookie httpOnly. El
+`middleware` protege las rutas del panel; las páginas del servidor usan
+`requireModule` para restringir por rol y los Route Handlers de escritura usan
+`requireApiUser`/`requireApiRoles`. El estado del usuario se expone a la UI con
+Context API (`AuthProvider`). Los permisos por módulo se definen en
+`src/frontend/features/auth/permissions.ts`.

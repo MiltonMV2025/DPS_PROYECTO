@@ -1,2 +1,5 @@
-import { PlaceholderPage } from "@/frontend/components/common/PlaceholderPage";
-export default function LoginPage() { return <PlaceholderPage title="Iniciar sesión" description="Acceso al sistema de gestión de Sonrisa Digital." />; }
+import { LoginForm } from "@/frontend/features/auth/LoginForm";
+
+export default function LoginPage() {
+  return <LoginForm />;
+}

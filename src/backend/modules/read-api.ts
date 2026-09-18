@@ -13,7 +13,7 @@ export function createReadApi(repositories: ReadRepositories = createReadReposit
     appointments: controller(service<AppointmentListItem>(repositories.appointments)),
     patients: controller(service<PatientListItem>(repositories.patients)),
     inventory: controller(service<InventoryListItem>(repositories.inventory)),
-    suppliers: controller(service<SupplierListItem>(repositories.suppliers)),
+    suppliers: { async list(categories?: string[]): Promise<ApiResponse<Paginated<SupplierListItem>>> { const items = await repositories.suppliers.findAll(categories); return { data: { items, page: 1, pageSize: items.length, total: items.length } }; } },
     clinicalRecords: controller(service<ClinicalRecordListItem>(repositories.clinicalRecords)),
     users: controller(service<UserListItem>(repositories.users)),
     dashboard: { async get(): Promise<ApiResponse<DashboardMetrics>> { return { data: await repositories.dashboard.get() }; } },

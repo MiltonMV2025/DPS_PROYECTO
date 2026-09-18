@@ -52,9 +52,13 @@ Antes de abrir un Pull Request, `lint`, `typecheck` y `build` deben pasar.
 - Las páginas deben encargarse de composición y datos, no convertirse en librerías de componentes gigantes.
 - No agregar dependencias UI nuevas sin justificarlo.
 
-## Estado actual y restricciones
+## Estado actual
 
-No implementar todavía autenticación real, autorización, CRUD, Prisma, MySQL, migraciones, seeders, integraciones externas ni reglas de negocio. Los datos del dashboard son estáticos y sirven únicamente para validar la composición visual.
+La Etapa 2 implementa autenticación con sesión (JWT en cookie), roles y rutas
+protegidas, CRUD de citas con reglas de negocio (choque de agenda y lista de
+espera), dashboard y reportes con datos reales de MySQL. Los módulos de
+pacientes, historiales, inventario, proveedores y usuarios se muestran en modo
+consulta. No agregar ORMs ni integraciones externas sin justificarlo.
 
 ## TypeScript y nombres
 
@@ -64,6 +68,8 @@ No implementar todavía autenticación real, autorización, CRUD, Prisma, MySQL,
 - Textos visibles pueden estar en español.
 
 ## Colaboración
+
+- Los mensajes de resultado de acciones (éxito, error o información) deben usar el componente reutilizable `ToastAlert` desde `src/frontend/components/common/ToastAlert.tsx`, fijo en la esquina inferior derecha, con cierre manual y autocierre.
 
 - Crear ramas desde `develop`.
 - Usar `feature/*`, `fix/*` o `chore/*`.
