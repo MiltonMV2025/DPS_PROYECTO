@@ -16,7 +16,6 @@ import {
   Truck,
   Users,
   UserRoundCog,
-  ChartNoAxesCombined,
   UserCircle,
 } from "lucide-react";
 import { Button } from "@/frontend/components/ui/button";
@@ -40,7 +39,6 @@ const navigation: { label: string; href: string; icon: typeof LayoutDashboard; k
   { label: "Pacientes", href: "/pacientes", icon: Users, key: "pacientes" },
   { label: "Historiales", href: "/historiales", icon: ClipboardList, key: "historiales" },
   { label: "Inventario", href: "/inventario", icon: Package, key: "inventario" },
-  { label: "Reportes", href: "/reportes", icon: ChartNoAxesCombined, key: "reportes" },
   { label: "Usuarios", href: "/usuarios", icon: UserRoundCog, key: "usuarios" },
   { label: "Proveedores", href: "/proveedores", icon: Truck, key: "proveedores" },
 ];
