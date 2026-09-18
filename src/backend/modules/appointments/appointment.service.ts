@@ -65,6 +65,7 @@ export function createAppointmentService(
       });
       const patientUserId = await repository.patientUserId(input.idPaciente);
       await notifications.create(patientUserId, "appointment_pending", "Cita pendiente", "Tu cita fue registrada y está pendiente de confirmación.", id);
+      await notifications.create(input.idOdontologo, "appointment_pending", "Nueva cita asignada", "Se te asignó una nueva cita y está pendiente de confirmación.", id);
       return id;
     },
 

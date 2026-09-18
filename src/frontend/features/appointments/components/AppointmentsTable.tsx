@@ -48,7 +48,7 @@ function AppointmentDetails({ appointment }: { appointment: AppointmentRow }) {
         <DialogHeader>
           <DialogTitle>Detalle de cita</DialogTitle>
           <DialogDescription>
-            Información de la cita. Solo lectura.
+            Información de la cita.
           </DialogDescription>
         </DialogHeader>
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-3 text-sm">

@@ -65,7 +65,7 @@ export default async function DashboardPage() {
           </p>
           <h1 className="mt-1 text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="mt-2 text-sm text-slate-600">
-            Una vista rápida de Sonrisa Digital · Datos reales de solo lectura
+            Una vista rápida de Sonrisa Digital con información actualizada
           </p>
         </div>
         <Button asChild>
@@ -120,7 +120,7 @@ export default async function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle id="appointments-title">Próximas citas</CardTitle>
-            <CardDescription>Próximas citas no canceladas · Solo lectura</CardDescription>
+            <CardDescription>Próximas citas no canceladas</CardDescription>
           </CardHeader>
           <CardContent>
             {appointments.error ? <Alert variant="error"><AlertTitle>Error de datos</AlertTitle><AlertDescription>{appointments.error}</AlertDescription></Alert> : <RealAppointmentsTable appointments={appointments.data?.items ?? []} />}

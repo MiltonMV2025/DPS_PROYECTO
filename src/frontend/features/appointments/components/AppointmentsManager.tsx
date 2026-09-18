@@ -1,15 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { MoreHorizontal, Plus } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Plus } from "lucide-react";
 import type { UserRole } from "@/backend/database/entities";
 import { ToastAlert } from "@/frontend/components/common/ToastAlert";
+import { ActionMenu } from "@/frontend/components/common/ActionMenu";
 import { Badge } from "@/frontend/components/ui/badge";
 import { Button } from "@/frontend/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/frontend/components/ui/card";
 import { DataTable, type DataTableColumn } from "@/frontend/components/ui/data-table";
 import { NewAppointmentDialog } from "./NewAppointmentDialog";
 import { CompleteAppointmentDialog } from "./CompleteAppointmentDialog";
-import { ExportPdfButton } from "@/frontend/components/common/ExportPdfButton";
 
 export type ManagedAppointment = {
   id: number;
@@ -45,28 +46,14 @@ const statusMeta: Record<ManagedAppointment["estado"], { label: string; variant:
 type AppointmentAction = "confirm" | "complete" | "cancel" | "delete";
 
 function AppointmentActionMenu({ appointment, canDelete, disabled, onAction }: { appointment: ManagedAppointment; canDelete: boolean; disabled: boolean; onAction: (action: AppointmentAction) => void }) {
-  const [open, setOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const close = (event: MouseEvent) => { if (!menuRef.current?.contains(event.target as Node)) setOpen(false); };
-    const escape = (event: KeyboardEvent) => { if (event.key === "Escape") setOpen(false); };
-    document.addEventListener("mousedown", close); document.addEventListener("keydown", escape);
-    return () => { document.removeEventListener("mousedown", close); document.removeEventListener("keydown", escape); };
-  }, [open]);
   if ((appointment.estado === "completada" || appointment.estado === "cancelada") && !canDelete) return null;
-  const action = (next: AppointmentAction) => { setOpen(false); onAction(next); };
-  return (
-    <div ref={menuRef} className="relative inline-flex">
-      <Button variant="ghost" size="icon" aria-label={`Acciones para la cita de ${appointment.patient}`} aria-haspopup="menu" aria-expanded={open} disabled={disabled} onClick={() => setOpen((current) => !current)}><MoreHorizontal aria-hidden="true" className="h-5 w-5" /></Button>
-      {open && <div role="menu" className="absolute right-0 top-11 z-50 min-w-44 overflow-hidden rounded-md border border-slate-200 bg-white py-1 text-sm shadow-lg">
-        {appointment.estado === "pendiente" && <button type="button" role="menuitem" className="block w-full px-3 py-2 text-left hover:bg-slate-100" onClick={() => action("confirm")}>Confirmar</button>}
-        {appointment.estado === "confirmada" && <button type="button" role="menuitem" className="block w-full px-3 py-2 text-left hover:bg-slate-100" onClick={() => action("complete")}>Completar</button>}
-        {(appointment.estado === "pendiente" || appointment.estado === "confirmada") && <button type="button" role="menuitem" className="block w-full px-3 py-2 text-left hover:bg-slate-100" onClick={() => action("cancel")}>Cancelar</button>}
-        {canDelete && <button type="button" role="menuitem" className="block w-full px-3 py-2 text-left hover:bg-slate-100" onClick={() => action("delete")}>Eliminar</button>}
-      </div>}
-    </div>
-  );
+  const items = [
+    ...(appointment.estado === "pendiente" ? [{ label: "Confirmar", onSelect: () => onAction("confirm" as const) }] : []),
+    ...(appointment.estado === "confirmada" ? [{ label: "Completar", onSelect: () => onAction("complete" as const) }] : []),
+    ...(appointment.estado === "pendiente" || appointment.estado === "confirmada" ? [{ label: "Cancelar", onSelect: () => onAction("cancel" as const), destructive: true }] : []),
+    ...(canDelete ? [{ label: "Eliminar", onSelect: () => onAction("delete" as const), destructive: true }] : []),
+  ];
+  return <ActionMenu label={`Acciones para la cita de ${appointment.patient}`} disabled={disabled} items={items} />;
 }
 
 function formatDateTime(iso: string): string {
@@ -165,15 +152,6 @@ export function AppointmentsManager({ role }: { role: UserRole }) {
       sortable: true,
       cell: (_value, row) => <Badge variant={statusMeta[row.estado].variant}>{statusMeta[row.estado].label}</Badge>,
     },
-    {
-      id: "exportar",
-      header: "Documento",
-      accessor: "id",
-      sortable: false,
-      cell: (_value, row) => (
-        <ExportPdfButton filename={`cita-${row.id}`} title="Detalle de la cita" subtitle={row.patient} description="Este documento resume la información registrada para la cita en Sonrisa Digital. Los datos clínicos se incluyen únicamente cuando existen en el expediente del paciente." sectionTitle="Información de la cita" sections={[{ label: "No. de cita", value: String(row.id) }, { label: "Paciente", value: row.patient }, { label: "Médico tratante", value: row.dentist }, { label: "Fecha y hora", value: formatDateTime(row.dateTime) }, { label: "Motivo de consulta", value: row.motivo ?? "Consulta" }, { label: "Duración", value: `${row.durationMin} minutos` }, { label: "Estado", value: statusMeta[row.estado].label }, ...(row.observaciones ? [{ label: "Observaciones", value: row.observaciones }] : []), ...(row.receta ? [{ label: "Receta", value: row.receta }] : []), ...(row.recomendaciones ? [{ label: "Recomendaciones", value: row.recomendaciones }] : [])]} label="Exportar" />
-      ),
-    },
   ];
 
   if (canManage) {
@@ -194,9 +172,13 @@ export function AppointmentsManager({ role }: { role: UserRole }) {
   }
 
   return (
-    <div className="space-y-4">
-      {canManage && data && (
-        <div className="flex justify-end">
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Citas y agenda</h1>
+          <p className="mt-2 text-sm text-slate-600">Gestión de la agenda de la clínica</p>
+        </div>
+        {canManage && data && (
           <NewAppointmentDialog
             patients={data.patients}
             dentists={data.dentists}
@@ -211,8 +193,8 @@ export function AppointmentsManager({ role }: { role: UserRole }) {
               </Button>
             }
           />
-        </div>
-      )}
+        )}
+      </div>
       {feedback && <ToastAlert variant={feedback.variant} title={feedback.title} message={feedback.message} onClose={() => setFeedback(null)} />}
       {completionId !== null && (
         <CompleteAppointmentDialog
@@ -226,12 +208,18 @@ export function AppointmentsManager({ role }: { role: UserRole }) {
           }}
         />
       )}
-      {loading && !data ? (
-        <p className="p-6 text-center text-sm text-slate-600" role="status">
-          Cargando citas...
-        </p>
-      ) : (
-        <DataTable
+      <Card>
+        <CardHeader>
+          <CardTitle>Agenda de citas</CardTitle>
+          <CardDescription>Próximas citas y registro de nuevas.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading && !data ? (
+            <p className="p-6 text-center text-sm text-slate-600" role="status">
+              Cargando citas...
+            </p>
+          ) : (
+            <DataTable
           columns={columns as unknown as DataTableColumn<Record<string, unknown>>[]}
           data={(data?.appointments ?? []) as unknown as Record<string, unknown>[]}
           getRowId={(row) => String((row as ManagedAppointment).id)}
@@ -252,8 +240,10 @@ export function AppointmentsManager({ role }: { role: UserRole }) {
               ],
             },
           ]}
-        />
-      )}
+            />
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

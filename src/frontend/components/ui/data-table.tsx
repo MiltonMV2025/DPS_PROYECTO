@@ -60,6 +60,9 @@ type DataTableProps<T extends Record<string, unknown>> = {
   rowLabel?: string;
   caption?: string;
   getRowId?: (row: T) => string;
+  toolbarContent?: ReactNode;
+  additionalFilterActive?: boolean;
+  onClearAdditionalFilters?: () => void;
 };
 // Radix items cannot use an empty value. Keep the sentinel out of row filtering.
 const allValues = "__all_values__";
@@ -73,6 +76,9 @@ export function DataTable<T extends Record<string, unknown>>({
   rowLabel = "registros",
   caption = "Listado de registros",
   getRowId,
+  toolbarContent,
+  additionalFilterActive = false,
+  onClearAdditionalFilters,
 }: DataTableProps<T>) {
   const id = useId();
   const [query, setQuery] = useState("");
@@ -86,7 +92,7 @@ export function DataTable<T extends Record<string, unknown>>({
   const [pageSize, setPageSize] = useState<PageSize>(25);
   const [page, setPage] = useState(1);
   const hasFilters = Boolean(
-    query || Object.values(activeFilters).some(Boolean),
+    query || Object.values(activeFilters).some(Boolean) || additionalFilterActive,
   );
 
   const filteredData = useMemo(
@@ -120,6 +126,7 @@ export function DataTable<T extends Record<string, unknown>>({
   function clearFilters() {
     setQuery("");
     setActiveFilters({});
+    onClearAdditionalFilters?.();
     setPage(1);
   }
   function updateFilter(filterId: string, value: string) {
@@ -179,7 +186,8 @@ export function DataTable<T extends Record<string, unknown>>({
             </div>
           </div>
         )}
-        <div className="flex flex-wrap items-end gap-3">
+        <div className="flex flex-wrap items-end justify-end gap-3">
+          {toolbarContent}
           {filters.map((filter) => (
             <div key={filter.id} className="w-full sm:w-52">
               <label
@@ -206,8 +214,8 @@ export function DataTable<T extends Record<string, unknown>>({
               </Select>
             </div>
           ))}
-          {(searchKeys.length > 0 || filters.length > 0) && (
-            <Button variant="ghost" disabled={!hasFilters} onClick={clearFilters}>
+          {(searchKeys.length > 0 || filters.length > 0 || toolbarContent) && (
+            <Button className="mb-0.5" variant="ghost" disabled={!hasFilters} onClick={clearFilters}>
               Limpiar filtros
             </Button>
           )}
