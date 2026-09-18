@@ -2,8 +2,7 @@ import { SignJWT, jwtVerify } from "jose";
 import { getAuthSecret } from "@/backend/config";
 import type { SessionPayload, SessionUser } from "./auth.types";
 
-export const SESSION_COOKIE = "session";
-const MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
+export const SESSION_COOKIE = "sonrisa_session";
 
 const key = () => new TextEncoder().encode(getAuthSecret());
 
@@ -35,5 +34,4 @@ export const sessionCookieOptions = {
   sameSite: "lax" as const,
   secure: process.env.NODE_ENV === "production",
   path: "/",
-  maxAge: MAX_AGE_SECONDS,
 };
