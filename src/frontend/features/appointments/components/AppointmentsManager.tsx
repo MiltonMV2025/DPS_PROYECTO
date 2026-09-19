@@ -94,7 +94,7 @@ export function AppointmentsManager({ role }: { role: UserRole }) {
   }, [load]);
 
   const changeStatus = useCallback(
-    async (id: number, estado: ManagedAppointment["estado"], completion?: { observaciones: string; receta: string; recomendaciones: string }) => {
+    async (id: number, estado: ManagedAppointment["estado"], completion?: { diagnostico: string; tratamiento: string; observaciones: string; receta: string; recomendaciones: string }) => {
       setBusyId(id);
       setFeedback(null);
       try {

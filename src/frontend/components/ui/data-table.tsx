@@ -31,8 +31,10 @@ import {
 import {
   getPageNumbers,
   getTablePage,
+  matchesFilterValue,
   pageSizeOptions,
   sortTableRows,
+  type DataTableFilterKind,
   type PageSize,
   type SortDirection,
 } from "@/frontend/components/ui/data-table-model";
@@ -50,6 +52,10 @@ export type DataTableFilter<T> = {
   label: string;
   accessor: keyof T;
   options: ReadonlyArray<{ label: string; value: string }>;
+  // "exact" compara la celda con el valor. "recent" trata la celda como fecha ISO
+  // y el valor como días hacia atrás desde hoy. Es serializable, así que sirve
+  // también desde páginas de servidor.
+  kind?: DataTableFilterKind;
 };
 type DataTableProps<T extends Record<string, unknown>> = {
   columns: ReadonlyArray<DataTableColumn<T>>;
@@ -108,7 +114,11 @@ export function DataTable<T extends Record<string, unknown>>({
         const matchesFilters = filters.every(
           (filter) =>
             !activeFilters[filter.id] ||
-            String(row[filter.accessor]) === activeFilters[filter.id],
+            matchesFilterValue(
+              row[filter.accessor],
+              activeFilters[filter.id],
+              filter.kind,
+            ),
         );
         return matchesQuery && matchesFilters;
       }),
