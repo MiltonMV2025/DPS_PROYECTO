@@ -80,6 +80,8 @@ export function createAppointmentService(
       if (input.estado === "completada") {
         await clinicalRecords.createForCompletedAppointment({
           idCita: id,
+          diagnostico: input.diagnostico!,
+          tratamiento: input.tratamiento!,
           observaciones: input.observaciones!,
           receta: input.receta || null,
           recomendaciones: input.recomendaciones || null,

@@ -22,11 +22,15 @@ export const createAppointmentSchema = z.object({
 
 export const updateAppointmentSchema = z.object({
   estado: z.enum(["confirmada", "completada", "cancelada"]),
+  diagnostico: z.string().trim().max(5000).optional(),
+  tratamiento: z.string().trim().max(5000).optional(),
   observaciones: z.string().trim().max(5000).optional(),
   receta: z.string().trim().max(5000).optional(),
   recomendaciones: z.string().trim().max(5000).optional(),
 }).superRefine((value, context) => {
   if (value.estado !== "completada") return;
+  if (!value.diagnostico) context.addIssue({ code: z.ZodIssueCode.custom, path: ["diagnostico"], message: "El diagnóstico es obligatorio al completar la cita." });
+  if (!value.tratamiento) context.addIssue({ code: z.ZodIssueCode.custom, path: ["tratamiento"], message: "El tratamiento es obligatorio al completar la cita." });
   if (!value.observaciones) context.addIssue({ code: z.ZodIssueCode.custom, path: ["observaciones"], message: "Las observaciones son obligatorias al completar la cita." });
 });
 
