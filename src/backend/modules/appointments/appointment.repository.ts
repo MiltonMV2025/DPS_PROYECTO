@@ -71,6 +71,7 @@ export function createAppointmentWriteRepository(pool: Pool = getDatabasePool())
       const [rows] = await pool.query<ManagedRow[]>(
         `SELECT p.id_paciente AS id, u.nombre AS name
          FROM Pacientes p JOIN Usuarios u ON u.id_usuario = p.id_usuario
+         WHERE u.activo = TRUE
          ORDER BY u.nombre`,
       );
       return rows.map((row) => ({ id: Number(row.id), name: String(row.name) }));
@@ -88,7 +89,7 @@ export function createAppointmentWriteRepository(pool: Pool = getDatabasePool())
 
     async patientExists(idPaciente: number): Promise<boolean> {
       const [rows] = await pool.query<CountRow[]>(
-        "SELECT COUNT(*) AS total FROM Pacientes WHERE id_paciente = ?",
+        "SELECT COUNT(*) AS total FROM Pacientes p JOIN Usuarios u ON u.id_usuario = p.id_usuario WHERE p.id_paciente = ? AND u.activo = TRUE",
         [idPaciente],
       );
       return Number(rows[0]?.total ?? 0) > 0;
