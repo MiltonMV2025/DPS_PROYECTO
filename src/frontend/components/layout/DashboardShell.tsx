@@ -56,7 +56,7 @@ function Navigation({
   const { user } = useAuth();
   const items = user ? navigation.filter((item) => canAccess(user.rol, item.key)) : [];
   return (
-    <nav aria-label="Navegación principal" className="space-y-1">
+    <nav aria-label="NavegaciÃ³n principal" className="space-y-1">
       {items.map(({ label, href, icon: Icon }) => (
         <Link
           key={href}
@@ -82,7 +82,7 @@ function Navigation({
 
 const roleLabels: Record<string, string> = {
   administrador: "Administrador",
-  odontologo: "Odontólogo",
+  odontologo: "OdontÃ³logo",
   recepcionista: "Recepcionista",
   paciente: "Paciente",
 };
@@ -152,7 +152,7 @@ export function DashboardShell({
           className="mt-4 w-full"
           aria-expanded={!collapsed}
           aria-controls="desktop-navigation"
-          aria-label={collapsed ? "Expandir menú" : "Contraer menú"}
+          aria-label={collapsed ? "Expandir menÃº" : "Contraer menÃº"}
           onClick={() => setCollapsed((value) => !value)}
         >
           {collapsed ? (
@@ -160,7 +160,7 @@ export function DashboardShell({
           ) : (
             <>
               <PanelLeftClose aria-hidden="true" className="h-5 w-5" />
-              <span>Contraer menú</span>
+              <span>Contraer menÃº</span>
             </>
           )}
         </Button>
@@ -173,7 +173,7 @@ export function DashboardShell({
                 variant="outline"
                 size="icon"
                 className="lg:hidden"
-                aria-label="Abrir menú"
+                aria-label="Abrir menÃº"
               >
                 <Menu aria-hidden="true" className="h-5 w-5" />
               </Button>
@@ -184,7 +184,7 @@ export function DashboardShell({
             >
               <SheetHeader className="mb-8 pr-10 text-left">
                 <SheetTitle>Sonrisa Digital</SheetTitle>
-                <SheetDescription>Navegación de la clínica</SheetDescription>
+                <SheetDescription>NavegaciÃ³n de la clÃ­nica</SheetDescription>
               </SheetHeader>
               <Navigation onNavigate={() => setMobileOpen(false)} />
             </SheetContent>
