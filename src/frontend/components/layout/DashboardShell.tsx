@@ -1,4 +1,4 @@
-ï»¿"use client";
+"use client";
 
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
@@ -16,6 +16,7 @@ import {
   Truck,
   Users,
   UserRoundCog,
+  ChartNoAxesCombined,
   UserCircle,
 } from "lucide-react";
 import { Button } from "@/frontend/components/ui/button";
@@ -39,6 +40,7 @@ const navigation: { label: string; href: string; icon: typeof LayoutDashboard; k
   { label: "Pacientes", href: "/pacientes", icon: Users, key: "pacientes" },
   { label: "Historiales", href: "/historiales", icon: ClipboardList, key: "historiales" },
   { label: "Inventario", href: "/inventario", icon: Package, key: "inventario" },
+  { label: "Reportes", href: "/reportes", icon: ChartNoAxesCombined, key: "reportes" },
   { label: "Usuarios", href: "/usuarios", icon: UserRoundCog, key: "usuarios" },
   { label: "Proveedores", href: "/proveedores", icon: Truck, key: "proveedores" },
 ];
@@ -54,7 +56,7 @@ function Navigation({
   const { user } = useAuth();
   const items = user ? navigation.filter((item) => canAccess(user.rol, item.key)) : [];
   return (
-    <nav aria-label="NavegaciÃ³n principal" className="space-y-1">
+    <nav aria-label="Navegación principal" className="space-y-1">
       {items.map(({ label, href, icon: Icon }) => (
         <Link
           key={href}
@@ -80,7 +82,7 @@ function Navigation({
 
 const roleLabels: Record<string, string> = {
   administrador: "Administrador",
-  odontologo: "OdontÃ³logo",
+  odontologo: "Odontólogo",
   recepcionista: "Recepcionista",
   paciente: "Paciente",
 };
@@ -150,7 +152,7 @@ export function DashboardShell({
           className="mt-4 w-full"
           aria-expanded={!collapsed}
           aria-controls="desktop-navigation"
-          aria-label={collapsed ? "Expandir menÃº" : "Contraer menÃº"}
+          aria-label={collapsed ? "Expandir menú" : "Contraer menú"}
           onClick={() => setCollapsed((value) => !value)}
         >
           {collapsed ? (
@@ -158,7 +160,7 @@ export function DashboardShell({
           ) : (
             <>
               <PanelLeftClose aria-hidden="true" className="h-5 w-5" />
-              <span>Contraer menÃº</span>
+              <span>Contraer menú</span>
             </>
           )}
         </Button>
@@ -171,7 +173,7 @@ export function DashboardShell({
                 variant="outline"
                 size="icon"
                 className="lg:hidden"
-                aria-label="Abrir menÃº"
+                aria-label="Abrir menú"
               >
                 <Menu aria-hidden="true" className="h-5 w-5" />
               </Button>
@@ -182,7 +184,7 @@ export function DashboardShell({
             >
               <SheetHeader className="mb-8 pr-10 text-left">
                 <SheetTitle>Sonrisa Digital</SheetTitle>
-                <SheetDescription>NavegaciÃ³n de la clÃ­nica</SheetDescription>
+                <SheetDescription>Navegación de la clínica</SheetDescription>
               </SheetHeader>
               <Navigation onNavigate={() => setMobileOpen(false)} />
             </SheetContent>

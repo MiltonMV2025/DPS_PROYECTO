@@ -21,7 +21,7 @@ export const modulePermissions: Record<ModuleKey, UserRole[]> = {
   pacientes: STAFF,
   historiales: ["administrador", "odontologo"],
   inventario: STAFF,
-  reportes: [],
+  reportes: STAFF,
   usuarios: ["administrador"],
   proveedores: ["administrador", "recepcionista"],
 };
