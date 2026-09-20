@@ -12,6 +12,7 @@ asignatura DPS941.
 | Fecha máxima | Domingo 20 de septiembre de 2026, 11:59 p. m. |
 | Fecha de entrega | 20 de septiembre de 2026 |
 | Repositorio | [DPS_PROYECTO en GitHub](https://github.com/MiltonMV2025/DPS_PROYECTO) |
+| Despliegue | [dps-proyecto.vercel.app](https://dps-proyecto.vercel.app) |
 | Reserva de defensa | Se publicará el domingo 20 de septiembre de 2026 |
 
 ### Integrantes
@@ -66,6 +67,54 @@ reportes y notificaciones según el rol de cada usuario.
 - Módulos de pacientes, usuarios, inventario y proveedores.
 - Tablas con búsqueda, filtros, ordenamiento, paginación y estados visuales.
 - Centro de notificaciones con lectura individual y masiva.
+
+## Capturas de pantalla
+
+### Inicio de sesión
+
+![Inicio de sesión](docs/screenshots/01-login.png)
+
+### Dashboard
+
+![Dashboard con métricas reales](docs/screenshots/02-dashboard.png)
+
+### Gestión de citas y agenda
+
+![Citas y agenda](docs/screenshots/03-citas.png)
+
+### Gestión de pacientes
+
+![Pacientes](docs/screenshots/04-pacientes.png)
+
+### Historial clínico
+
+![Historial clínico](docs/screenshots/05-historiales.png)
+
+### Control de inventario
+
+![Inventario](docs/screenshots/06-inventario.png)
+
+### Reportes
+
+![Reportes](docs/screenshots/07-reportes.png)
+
+### Gestión de usuarios
+
+![Usuarios](docs/screenshots/08-usuarios.png)
+
+### Permisos diferenciados por rol
+
+El menú lateral cambia según el rol autenticado: el administrador ve los
+ocho módulos operativos, mientras que el paciente solo ve su perfil y sus
+propias citas.
+
+| Menú — Administrador | Menú — Paciente |
+|---|---|
+| ![Menú administrador](docs/screenshots/09a-menu-admin.png) | ![Menú paciente](docs/screenshots/09b-menu-paciente.png) |
+
+### Interfaz responsiva
+
+![Vista responsiva en tableta](docs/screenshots/10-responsive.png)
 
 ## Stack tecnológico
 
