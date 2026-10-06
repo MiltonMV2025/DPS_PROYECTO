@@ -8,7 +8,7 @@ import {
   createWaitingListWriteRepository,
   type WaitingListWriteRepository,
 } from "@/backend/modules/waiting-list/waiting-list.repository";
-import type { CreateAppointmentInput, UpdateAppointmentInput } from "./appointment.schema";
+import type { AppointmentAvailabilityInput, CreateAppointmentInput, MobileCreateAppointmentInput, UpdateAppointmentInput } from "./appointment.schema";
 import { createNotificationService, type NotificationService } from "@/backend/modules/notifications";
 import { createClinicalRecordController, type ClinicalRecordController } from "@/backend/modules/clinical-records/clinical-record.controller";
 
@@ -35,6 +35,8 @@ export function createAppointmentService(
 ) {
   return {
     list: (userId?: number) => repository.listUpcoming(userId),
+
+    listForPatient: (userId: number) => repository.listForPatient(userId),
 
     async manage(patientUserId?: number) {
       const [appointments, patients, dentists] = await Promise.all([
@@ -66,6 +68,48 @@ export function createAppointmentService(
       const patientUserId = await repository.patientUserId(input.idPaciente);
       await notifications.create(patientUserId, "appointment_pending", "Cita pendiente", "Tu cita fue registrada y está pendiente de confirmación.", id);
       return id;
+    },
+
+    async createForPatient(userId: number, input: MobileCreateAppointmentInput): Promise<number> {
+      const idPaciente = await repository.patientIdByUserId(userId);
+      if (!idPaciente) throw new ApplicationError("PATIENT_PROFILE_NOT_FOUND", "No se encontró la ficha del paciente.", 404);
+      return this.create({ ...input, idPaciente });
+    },
+
+    async availability(input: AppointmentAvailabilityInput) {
+      const dentists = await repository.listDentistOptions();
+      const selectedDentists = input.idOdontologo == null ? dentists : dentists.filter((dentist) => dentist.id === input.idOdontologo);
+      if (input.idOdontologo != null && selectedDentists.length === 0) {
+        throw new ApplicationError("DENTIST_NOT_FOUND", "El odontólogo seleccionado no está disponible.", 400);
+      }
+
+      const openingMinutes = 8 * 60;
+      const closingMinutes = 17 * 60;
+      const slots = (await Promise.all(selectedDentists.map(async (dentist) => {
+        const busy = await repository.listBusyForDate(dentist.id, input.date);
+        const busyRanges = busy.map((item) => {
+          const start = new Date(item.dateTime.replace(" ", "T")).getTime();
+          return { start, end: start + item.durationMin * 60_000 };
+        });
+        const available: { start: string; end: string }[] = [];
+        for (let minutes = openingMinutes; minutes + input.duracionMin <= closingMinutes; minutes += 30) {
+          const hours = String(Math.floor(minutes / 60)).padStart(2, "0");
+          const minute = String(minutes % 60).padStart(2, "0");
+          const endMinutes = minutes + input.duracionMin;
+          const endHours = String(Math.floor(endMinutes / 60)).padStart(2, "0");
+          const endMinute = String(endMinutes % 60).padStart(2, "0");
+          const start = `${input.date}T${hours}:${minute}:00`;
+          const end = `${input.date}T${endHours}:${endMinute}:00`;
+          const startTime = new Date(start).getTime();
+          const endTime = new Date(end).getTime();
+          const conflicts = busyRanges.some((range) => range.start < endTime && range.end > startTime);
+          if (conflicts || startTime <= Date.now()) continue;
+          available.push({ start, end });
+        }
+        return { id: dentist.id, name: dentist.name, slots: available };
+      }))).filter((dentist) => dentist.slots.length > 0);
+
+      return { date: input.date, durationMin: input.duracionMin, dentists: slots };
     },
 
     async update(id: number, input: UpdateAppointmentInput): Promise<{ notified: string | null }> {
@@ -101,6 +145,17 @@ export function createAppointmentService(
       }
 
       return { notified: null };
+    },
+
+    async cancelForPatient(id: number, userId: number): Promise<{ notified: string | null }> {
+      const current = await repository.findStatus(id);
+      if (!current || current.patientUserId !== userId) {
+        throw new ApplicationError("APPOINTMENT_NOT_FOUND", "La cita no existe.", 404);
+      }
+      if (current.estado !== "pendiente" && current.estado !== "confirmada") {
+        throw new ApplicationError("INVALID_TRANSITION", "El cambio de estado no está permitido.", 409);
+      }
+      return this.update(id, { estado: "cancelada" });
     },
 
     async remove(id: number): Promise<void> {

@@ -29,6 +29,7 @@ Consultar `.env.example`. No agregar secretos reales al repositorio.
   de forma lazy en `src/backend/database/pool.ts`.
 - `AUTH_SECRET`: secreto usado para firmar los tokens de sesión. Generar uno con
   `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"`.
+- `MOBILE_AUTH_SECRET`: secreto independiente para los access tokens Bearer de Mobile.
 - `INTERNAL_API_SECRET` e `INTERNAL_API_BASE_URL`: protegen los Route Handlers
   internos de solo lectura usados por el dashboard.
 
@@ -94,3 +95,34 @@ Requests hacia `develop`. Ver `docs/CONTRIBUTING.md`.
 La aplicación se despliega en Vercel. Configurar `DATABASE_URL`, `AUTH_SECRET`,
 `INTERNAL_API_SECRET` e `INTERNAL_API_BASE_URL` (la URL pública del despliegue)
 como variables de entorno del proyecto.
+## Soporte Mobile
+
+El repositorio mantiene una única API Next.js para Web y Mobile:
+
+```text
+Web    -- cookie JWT --> Route Handlers --> MySQL
+Mobile -- Bearer JWT --> Route Handlers --> MySQL
+```
+
+La autenticación Mobile usa access tokens de corta duración y refresh tokens
+opacos rotatorios persistidos como hash en `Sesiones_Mobile`. La autenticación
+Web basada en `sonrisa_session` permanece separada.
+
+La aplicación Expo está en `mobile/` y usa su propio `package.json`. Para
+prepararla localmente:
+
+```powershell
+cd mobile
+npm install
+Copy-Item .env.example .env
+npx expo start
+```
+
+Configurar `EXPO_PUBLIC_API_URL` con la URL pública de la API. Los secretos
+`DATABASE_URL`, `AUTH_SECRET`, `MOBILE_AUTH_SECRET` e `INTERNAL_API_SECRET`
+son exclusivos del backend.
+
+Mobile puede registrar tokens de dispositivo mediante
+`POST /api/v1/notifications/devices`. Firebase/Expo Notifications se utiliza
+únicamente para push; MySQL continúa siendo la fuente de verdad y no se usa
+Firestore.

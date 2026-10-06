@@ -28,6 +28,7 @@ export type ManagedAppointment = {
 export type AppointmentStatusRecord = { estado: AppointmentStatus; dateTime: string; patientUserId: number };
 
 export type PersonOption = { id: number; name: string };
+export type BusyAppointment = { dateTime: string; durationMin: number };
 
 type ManagedRow = RowDataPacket & Record<string, unknown>;
 type CountRow = RowDataPacket & { total: number };
@@ -46,25 +47,46 @@ const LIST_QUERY = `
 
 const toIso = (value: unknown) => (value instanceof Date ? value.toISOString() : String(value));
 
+function mapManaged(row: ManagedRow): ManagedAppointment {
+  return {
+    id: Number(row.id_cita),
+    idPaciente: Number(row.id_paciente),
+    idOdontologo: Number(row.id_odontologo),
+    patient: String(row.patient_name),
+    dentist: String(row.dentist_name),
+    dateTime: toIso(row.fecha_hora),
+    durationMin: Number(row.duracion_min),
+    motivo: row.motivo == null ? null : String(row.motivo),
+    estado: row.estado as AppointmentStatus,
+    observaciones: row.observaciones == null ? null : String(row.observaciones),
+    receta: row.receta == null ? null : String(row.receta),
+    recomendaciones: row.recomendaciones == null ? null : String(row.recomendaciones),
+  };
+}
+
 export function createAppointmentWriteRepository(pool: Pool = getDatabasePool()) {
   return {
     async listUpcoming(patientUserId?: number): Promise<ManagedAppointment[]> {
       const query = patientUserId == null ? LIST_QUERY : `${LIST_QUERY.replace("WHERE c.fecha_hora >= CURDATE()", "WHERE c.fecha_hora >= CURDATE() AND p.id_usuario = ?")}`;
       const [rows] = await pool.query<ManagedRow[]>(query, patientUserId == null ? [] : [patientUserId]);
-      return rows.map((row) => ({
-        id: Number(row.id_cita),
-        idPaciente: Number(row.id_paciente),
-        idOdontologo: Number(row.id_odontologo),
-        patient: String(row.patient_name),
-        dentist: String(row.dentist_name),
-        dateTime: toIso(row.fecha_hora),
-        durationMin: Number(row.duracion_min),
-        motivo: row.motivo == null ? null : String(row.motivo),
-        estado: row.estado as AppointmentStatus,
-        observaciones: row.observaciones == null ? null : String(row.observaciones),
-        receta: row.receta == null ? null : String(row.receta),
-        recomendaciones: row.recomendaciones == null ? null : String(row.recomendaciones),
-      }));
+      return rows.map(mapManaged);
+    },
+
+    async listForPatient(userId: number): Promise<ManagedAppointment[]> {
+      const [rows] = await pool.query<ManagedRow[]>(
+        `SELECT c.id_cita, c.id_paciente, c.id_odontologo, c.fecha_hora, c.duracion_min, c.motivo, c.estado,
+                h.observaciones, h.receta, h.recomendaciones,
+                up.nombre AS patient_name, uo.nombre AS dentist_name
+         FROM Citas c
+         JOIN Pacientes p ON p.id_paciente = c.id_paciente
+         JOIN Usuarios up ON up.id_usuario = p.id_usuario
+         JOIN Usuarios uo ON uo.id_usuario = c.id_odontologo
+         LEFT JOIN Historiales_Clinicos h ON h.id_cita = c.id_cita
+         WHERE p.id_usuario = ?
+         ORDER BY c.fecha_hora DESC`,
+        [userId],
+      );
+      return rows.map(mapManaged);
     },
 
     async listPatientOptions(): Promise<PersonOption[]> {
@@ -99,6 +121,11 @@ export function createAppointmentWriteRepository(pool: Pool = getDatabasePool())
       return Number(rows[0]?.total);
     },
 
+    async patientIdByUserId(userId: number): Promise<number | null> {
+      const [rows] = await pool.query<CountRow[]>("SELECT id_paciente AS total FROM Pacientes WHERE id_usuario = ? LIMIT 1", [userId]);
+      return rows[0]?.total == null ? null : Number(rows[0].total);
+    },
+
     async dentistExists(idOdontologo: number): Promise<boolean> {
       const [rows] = await pool.query<CountRow[]>(
         "SELECT COUNT(*) AS total FROM Usuarios WHERE id_usuario = ? AND rol IN ('odontologo','administrador') AND activo = TRUE",
@@ -118,6 +145,17 @@ export function createAppointmentWriteRepository(pool: Pool = getDatabasePool())
         [idOdontologo, excludeId, fechaHora, durationMin, fechaHora],
       );
       return Number(rows[0]?.total ?? 0) > 0;
+    },
+
+    async listBusyForDate(idOdontologo: number, date: string): Promise<BusyAppointment[]> {
+      const [rows] = await pool.query<ManagedRow[]>(
+        `SELECT fecha_hora, duracion_min
+         FROM Citas
+         WHERE id_odontologo = ? AND DATE(fecha_hora) = ? AND estado <> 'cancelada'
+         ORDER BY fecha_hora`,
+        [idOdontologo, date],
+      );
+      return rows.map((row) => ({ dateTime: toIso(row.fecha_hora), durationMin: Number(row.duracion_min) }));
     },
 
     async create(appointment: NewAppointment): Promise<number> {

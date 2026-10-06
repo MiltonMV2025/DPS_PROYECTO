@@ -70,3 +70,11 @@ export function getAuthSecret(): string {
   }
   return secret;
 }
+
+export function getMobileAuthSecret(): string {
+  const secret = process.env.MOBILE_AUTH_SECRET;
+  if (!secret || secret.trim().length < 32) {
+    throw new Error("MOBILE_AUTH_SECRET is required and must be at least 32 characters");
+  }
+  return secret;
+}
