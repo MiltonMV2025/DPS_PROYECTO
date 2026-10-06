@@ -12,7 +12,7 @@ export async function getAvailability(params: { date: string; duracionMin: numbe
 }
 
 export async function createAppointment(input: { idOdontologo: number; fechaHora: string; duracionMin: number; motivo?: string }) {
-  const response = await api.post<{ data: { id: number } }>("/api/v1/me/appointments", input);
+  const response = await api.post<{ data: { id: number; status: "pendiente" } }>("/api/v1/me/appointment-requests", input);
   return response.data.data;
 }
 

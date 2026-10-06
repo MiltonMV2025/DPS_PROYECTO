@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Plus } from "lucide-react";
+import { CalendarCheck, CheckCircle2, Clock3, Plus } from "lucide-react";
 import type { UserRole } from "@/backend/database/entities";
 import { ToastAlert } from "@/frontend/components/common/ToastAlert";
 import { ActionMenu } from "@/frontend/components/common/ActionMenu";
@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/fro
 import { DataTable, type DataTableColumn } from "@/frontend/components/ui/data-table";
 import { NewAppointmentDialog } from "./NewAppointmentDialog";
 import { CompleteAppointmentDialog } from "./CompleteAppointmentDialog";
+import { RequestAppointmentDialog } from "./RequestAppointmentDialog";
 
 export type ManagedAppointment = {
   id: number;
@@ -37,7 +38,7 @@ type Feedback = { variant: "success" | "info" | "error"; title: string; message?
 const STAFF: UserRole[] = ["administrador", "recepcionista", "odontologo"];
 
 const statusMeta: Record<ManagedAppointment["estado"], { label: string; variant: "success" | "info" | "error" }> = {
-  pendiente: { label: "Pendiente", variant: "info" },
+  pendiente: { label: "Solicitud pendiente", variant: "info" },
   confirmada: { label: "Confirmada", variant: "success" },
   completada: { label: "Completada", variant: "success" },
   cancelada: { label: "Cancelada", variant: "error" },
@@ -74,6 +75,10 @@ export function AppointmentsManager({ role }: { role: UserRole }) {
 
   const canManage = STAFF.includes(role);
   const canDelete = role === "administrador";
+  const patientAppointments = data?.appointments ?? [];
+  const pendingRequests = patientAppointments.filter((appointment) => appointment.estado === "pendiente").length;
+  const confirmedAppointments = patientAppointments.filter((appointment) => appointment.estado === "confirmada").length;
+  const completedAppointments = patientAppointments.filter((appointment) => appointment.estado === "completada").length;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -194,6 +199,12 @@ export function AppointmentsManager({ role }: { role: UserRole }) {
             }
           />
         )}
+        {role === "paciente" && (
+          <RequestAppointmentDialog
+            onCreated={load}
+            trigger={<Button><Plus aria-hidden="true" className="h-4 w-4" />Solicitar cita</Button>}
+          />
+        )}
       </div>
       {feedback && <ToastAlert variant={feedback.variant} title={feedback.title} message={feedback.message} onClose={() => setFeedback(null)} />}
       {completionId !== null && (
@@ -208,6 +219,11 @@ export function AppointmentsManager({ role }: { role: UserRole }) {
           }}
         />
       )}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Card><CardContent className="flex items-center justify-between gap-3 pt-6"><div><p className="text-sm text-slate-600">Solicitudes pendientes</p><p className="mt-1 text-2xl font-bold">{pendingRequests}</p></div><Clock3 className="h-6 w-6 text-primary" aria-hidden="true" /></CardContent></Card>
+        <Card><CardContent className="flex items-center justify-between gap-3 pt-6"><div><p className="text-sm text-slate-600">Citas confirmadas</p><p className="mt-1 text-2xl font-bold">{confirmedAppointments}</p></div><CalendarCheck className="h-6 w-6 text-primary" aria-hidden="true" /></CardContent></Card>
+        <Card><CardContent className="flex items-center justify-between gap-3 pt-6"><div><p className="text-sm text-slate-600">Citas completadas</p><p className="mt-1 text-2xl font-bold">{completedAppointments}</p></div><CheckCircle2 className="h-6 w-6 text-primary" aria-hidden="true" /></CardContent></Card>
+      </div>
       <Card>
         <CardHeader>
           <CardTitle>Agenda de citas</CardTitle>
@@ -233,7 +249,7 @@ export function AppointmentsManager({ role }: { role: UserRole }) {
               label: "Estado",
               accessor: "estado",
               options: [
-                { label: "Pendiente", value: "pendiente" },
+                { label: "Solicitudes pendientes", value: "pendiente" },
                 { label: "Confirmada", value: "confirmada" },
                 { label: "Completada", value: "completada" },
                 { label: "Cancelada", value: "cancelada" },

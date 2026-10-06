@@ -10,6 +10,7 @@ type AuthContextValue = {
   signIn: (correo: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshSession: () => Promise<string | null>;
+  sessionMessage: string | null;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -18,6 +19,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<User | null>(null);
   const [accessToken, setLocalAccessToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sessionMessage, setSessionMessage] = useState<string | null>(null);
 
   const clearSession = useCallback(async () => {
     setUser(null);
@@ -37,6 +39,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       await sessionStorage.setRefreshToken(result.refreshToken);
       return result.accessToken;
     } catch {
+      setSessionMessage("Tu sesión expiró. Iniciá sesión nuevamente.");
       await clearSession();
       return null;
     }
@@ -55,6 +58,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     loading,
     refreshSession,
     async signIn(correo, password) {
+      setSessionMessage(null);
       const result = await authApi.login(correo, password);
       setUser(result.user);
       setLocalAccessToken(result.accessToken);
@@ -64,7 +68,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
     async signOut() {
       try { if (accessToken) await authApi.logout(); } finally { await clearSession(); }
     },
-  }), [accessToken, clearSession, loading, refreshSession, user]);
+    sessionMessage,
+  }), [accessToken, clearSession, loading, refreshSession, sessionMessage, user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

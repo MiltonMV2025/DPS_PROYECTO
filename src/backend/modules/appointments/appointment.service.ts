@@ -77,6 +77,11 @@ export function createAppointmentService(
       return this.create({ ...input, idPaciente });
     },
 
+    async requestForPatient(userId: number, input: MobileCreateAppointmentInput): Promise<{ id: number; status: "pendiente" }> {
+      const id = await this.createForPatient(userId, input);
+      return { id, status: "pendiente" };
+    },
+
     async availability(input: AppointmentAvailabilityInput) {
       const dentists = await repository.listDentistOptions();
       const selectedDentists = input.idOdontologo == null ? dentists : dentists.filter((dentist) => dentist.id === input.idOdontologo);

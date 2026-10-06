@@ -1,31 +1,31 @@
 import { useState } from "react";
-import { Alert, Button, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from "react-native";
+import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from "react-native";
 import { Redirect, router } from "expo-router";
 import { useAuth } from "@/auth/AuthProvider";
+import { getApiErrorMessage } from "@/api/errors";
+import { AppButton, AppCard, AppScreen, colors, FieldError, uiStyles } from "@/components/ui";
 
 export default function LoginScreen() {
-  const { user, signIn } = useAuth();
-  const [correo, setCorreo] = useState("");
+  const { user, signIn, sessionMessage } = useAuth();
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | undefined>();
   if (user) return <Redirect href="/(app)" />;
 
   async function submit() {
-    setBusy(true);
-    try { await signIn(correo, password); router.replace("/(app)"); }
-    catch (error) { Alert.alert("No se pudo iniciar sesión", error instanceof Error ? error.message : "Verificá tus credenciales."); }
+    const normalized = email.trim();
+    const nextEmailError = !normalized ? "Ingresá tu correo electrónico." : !/^\S+@\S+\.\S+$/.test(normalized) ? "Ingresá un correo electrónico válido." : undefined;
+    setEmailError(nextEmailError);
+    if (nextEmailError || !password) { if (!password) setError("Ingresá tu contraseña."); return; }
+    setBusy(true); setError(null);
+    try { await signIn(normalized, password); router.replace("/(app)"); }
+    catch (caught) { setError(getApiErrorMessage(caught, "No pudimos iniciar sesión.")); }
     finally { setBusy(false); }
   }
 
-  return <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.container}>
-    <View style={styles.card}>
-      <Text style={styles.title}>Sonrisa Digital</Text>
-      <Text style={styles.subtitle}>Ingresá a tu cuenta</Text>
-      <TextInput autoCapitalize="none" keyboardType="email-address" placeholder="Correo" value={correo} onChangeText={setCorreo} style={styles.input} />
-      <TextInput secureTextEntry placeholder="Contraseña" value={password} onChangeText={setPassword} style={styles.input} />
-      <Button title={busy ? "Ingresando..." : "Iniciar sesión"} onPress={submit} disabled={busy || !correo || !password} color="#007BFF" />
-    </View>
-  </KeyboardAvoidingView>;
+  return <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.keyboard}><AppScreen contentStyle={styles.container}><View style={styles.brand}><Text style={styles.logo}>Sonrisa Digital</Text><Text style={styles.subtitle}>Tu salud dental, más cerca.</Text></View><AppCard><Text style={styles.title}>Ingresá a tu cuenta</Text>{(error || sessionMessage) && <Text accessibilityRole="alert" style={styles.formError}>{error ?? sessionMessage}</Text>}<View><Text style={uiStyles.label}>Correo electrónico</Text><TextInput autoCapitalize="none" keyboardType="email-address" autoComplete="email" value={email} onChangeText={(value) => { setEmail(value); setEmailError(undefined); setError(null); }} style={[uiStyles.input, emailError && uiStyles.inputInvalid]} editable={!busy} /><FieldError message={emailError} /></View><View><Text style={uiStyles.label}>Contraseña</Text><TextInput secureTextEntry autoComplete="password" value={password} onChangeText={(value) => { setPassword(value); setError(null); }} style={uiStyles.input} editable={!busy} /><FieldError message={!password && error === "Ingresá tu contraseña." ? error : undefined} /></View><AppButton title="Iniciar sesión" onPress={submit} loading={busy} /></AppCard></AppScreen></KeyboardAvoidingView>;
 }
 
-const styles = StyleSheet.create({ container: { flex: 1, justifyContent: "center", padding: 24, backgroundColor: "#F4FAFF" }, card: { gap: 14, backgroundColor: "white", padding: 24, borderRadius: 16 }, title: { color: "#007BFF", fontSize: 28, fontWeight: "700" }, subtitle: { color: "#555", marginBottom: 8 }, input: { borderColor: "#D6E5F0", borderWidth: 1, borderRadius: 8, padding: 12 }, });
+const styles = StyleSheet.create({ keyboard: { flex: 1 }, container: { justifyContent: "center" }, brand: { alignItems: "center", marginBottom: 8 }, logo: { color: colors.primary, fontSize: 30, fontWeight: "800" }, subtitle: { color: colors.muted, marginTop: 6 }, title: { color: colors.navy, fontSize: 22, fontWeight: "700", marginBottom: 4 }, formError: { color: colors.danger, backgroundColor: colors.dangerBackground, borderRadius: 10, padding: 12, lineHeight: 19 } });

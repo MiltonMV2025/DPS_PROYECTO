@@ -20,6 +20,9 @@ export function createAppointmentController(service: AppointmentService = create
     createForPatient(userId: number, raw: unknown): Promise<number> {
       return service.createForPatient(userId, parseInput(mobileCreateAppointmentSchema, raw));
     },
+    requestForPatient(userId: number, raw: unknown) {
+      return service.requestForPatient(userId, parseInput(mobileCreateAppointmentSchema, raw));
+    },
     availability(raw: unknown) {
       return service.availability(parseInput(appointmentAvailabilitySchema, raw));
     },

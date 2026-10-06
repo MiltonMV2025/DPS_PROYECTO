@@ -63,6 +63,9 @@ export function createMobileAuthService(
   return {
     async login(input: LoginInput): Promise<MobileTokenResponse> {
       const user = await authService.login(input);
+      if (user.rol !== "paciente") {
+        throw new ApplicationError("MOBILE_ROLE_NOT_ALLOWED", "La aplicación Mobile está disponible para cuentas de paciente.", 403);
+      }
       const familyToken = randomUUID();
       const refreshToken = createRefreshToken();
       await sessions.create({
