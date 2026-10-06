@@ -49,7 +49,7 @@ export function createAppointmentService(
 
     async create(input: CreateAppointmentInput): Promise<number> {
       if (!(await repository.patientExists(input.idPaciente))) {
-        throw new ApplicationError("PATIENT_NOT_FOUND", "El paciente seleccionado no existe.", 400);
+        throw new ApplicationError("PATIENT_NOT_FOUND", "El paciente seleccionado no existe o está inactivo.", 400);
       }
       if (!(await repository.dentistExists(input.idOdontologo))) {
         throw new ApplicationError("DENTIST_NOT_FOUND", "El odontólogo seleccionado no está disponible.", 400);
@@ -67,6 +67,7 @@ export function createAppointmentService(
       });
       const patientUserId = await repository.patientUserId(input.idPaciente);
       await notifications.create(patientUserId, "appointment_pending", "Cita pendiente", "Tu cita fue registrada y está pendiente de confirmación.", id);
+      await notifications.create(input.idOdontologo, "appointment_pending", "Nueva cita asignada", "Se te asignó una nueva cita y está pendiente de confirmación.", id);
       return id;
     },
 
@@ -123,6 +124,8 @@ export function createAppointmentService(
       if (input.estado === "completada") {
         await clinicalRecords.createForCompletedAppointment({
           idCita: id,
+          diagnostico: input.diagnostico!,
+          tratamiento: input.tratamiento!,
           observaciones: input.observaciones!,
           receta: input.receta || null,
           recomendaciones: input.recomendaciones || null,

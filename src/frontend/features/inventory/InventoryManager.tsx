@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { MoreHorizontal, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Alert, AlertDescription } from "@/frontend/components/ui/alert";
-import { ExportPdfButton } from "@/frontend/components/common/ExportPdfButton";
+import { ActionMenu } from "@/frontend/components/common/ActionMenu";
 import { Button } from "@/frontend/components/ui/button";
 import { Badge } from "@/frontend/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/frontend/components/ui/card";
@@ -43,47 +43,7 @@ const emptyForm: FormState = {
 };
 
 function InventoryActionMenu({ item, disabled, onEdit, onDelete }: { item: InventoryListItem; disabled: boolean; onEdit: () => void; onDelete: () => void }) {
-  const [open, setOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const close = (event: MouseEvent) => {
-      if (!menuRef.current?.contains(event.target as Node)) setOpen(false);
-    };
-    const escape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("mousedown", close);
-    document.addEventListener("keydown", escape);
-    return () => {
-      document.removeEventListener("mousedown", close);
-      document.removeEventListener("keydown", escape);
-    };
-  }, [open]);
-
-  return (
-    <div ref={menuRef} className="relative inline-flex">
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        aria-label={`Acciones para ${item.name}`}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        disabled={disabled}
-        onClick={() => setOpen((current) => !current)}
-      >
-        <MoreHorizontal aria-hidden="true" className="h-5 w-5" />
-      </Button>
-      {open && (
-        <div role="menu" className="absolute right-0 top-11 z-50 min-w-44 overflow-hidden rounded-md border border-slate-200 bg-white py-1 text-sm shadow-lg">
-          <button type="button" role="menuitem" className="block w-full px-3 py-2 text-left hover:bg-slate-100" onClick={() => { setOpen(false); onEdit(); }}>Editar</button>
-          <button type="button" role="menuitem" className="block w-full px-3 py-2 text-left hover:bg-slate-100" onClick={() => { setOpen(false); onDelete(); }}>Eliminar</button>
-        </div>
-      )}
-    </div>
-  );
+  return <ActionMenu label={`Acciones para ${item.name}`} disabled={disabled} items={[{ label: "Editar", onSelect: onEdit }, { label: "Eliminar", onSelect: onDelete, destructive: true }]} />;
 }
 
 export function InventoryManager({ items, suppliers, error }: { items: InventoryListItem[]; suppliers: SupplierListItem[]; error?: string }) {
@@ -179,34 +139,10 @@ export function InventoryManager({ items, suppliers, error }: { items: Inventory
     { id: "minimumStock", header: "Mínimo", accessor: "minimumStock" },
     { id: "supplier", header: "Proveedor", accessor: "supplier", cell: (value) => String(value ?? "Sin proveedor") },
     { id: "stockStatus", header: "Estado", accessor: "stockStatus", cell: (value) => (
-      <Badge variant={value === "low" ? "info" : "success"}>
-        {value === "low" ? "Stock bajo" : "Disponible"}
+      <Badge variant={value === "out" ? "error" : value === "low" ? "info" : "success"}>
+        {value === "out" ? "Agotado" : value === "low" ? "Stock bajo" : "Disponible"}
       </Badge>
     ) },
-    {
-      id: "document",
-      header: "Documento",
-      accessor: "id",
-      cell: (_value, row) => (
-        <ExportPdfButton
-          filename={`inventario-${row.id}-${row.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
-          title="Detalle de inventario"
-          subtitle={row.name}
-          description="Reporte del insumo registrado en el inventario de Sonrisa Digital."
-          sectionTitle="Información del insumo"
-          sections={[
-            { label: "Insumo", value: row.name },
-            { label: "Categoría", value: row.category },
-            { label: "Unidad de medida", value: row.unit },
-            { label: "Stock actual", value: String(row.currentStock) },
-            { label: "Stock mínimo", value: String(row.minimumStock) },
-            { label: "Proveedor", value: row.supplier ?? "Sin proveedor" },
-            { label: "Estado", value: row.stockStatus === "low" ? "Stock bajo" : "Disponible" },
-          ]}
-          label="Exportar"
-        />
-      ),
-    },
     {
       id: "actions",
       header: "Acciones",
@@ -238,7 +174,7 @@ export function InventoryManager({ items, suppliers, error }: { items: Inventory
       <Card>
         <CardHeader><CardTitle>Inventario</CardTitle></CardHeader>
         <CardContent>
-          <DataTable columns={columns} data={items} caption="Listado de insumos" rowLabel="insumos" searchKeys={["name", "category"]} getRowId={(row) => String(row.id)} />
+          <DataTable columns={columns} data={items} caption="Listado de insumos" rowLabel="insumos" searchKeys={["name", "category"]} filters={[{ id: "stockStatus", label: "Estado de stock", accessor: "stockStatus", options: [{ label: "Sin existencias", value: "out" }] }]} getRowId={(row) => String(row.id)} />
         </CardContent>
       </Card>
 

@@ -8,8 +8,8 @@ export function createClinicalRecordWriteRepository(pool: Pool = getDatabasePool
     async createForCompletedAppointment(input: CompletionRecordInput): Promise<number> {
       const [result] = await pool.query<ResultSetHeader>(
         `INSERT INTO Historiales_Clinicos (id_cita, diagnostico, tratamiento, observaciones, receta, recomendaciones)
-         VALUES (?, 'No registrado', 'No registrado', ?, ?, ?)`,
-        [input.idCita, input.observaciones, input.receta, input.recomendaciones],
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [input.idCita, input.diagnostico, input.tratamiento, input.observaciones, input.receta, input.recomendaciones],
       );
       return result.insertId;
     },

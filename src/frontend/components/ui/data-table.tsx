@@ -31,8 +31,10 @@ import {
 import {
   getPageNumbers,
   getTablePage,
+  matchesFilterValue,
   pageSizeOptions,
   sortTableRows,
+  type DataTableFilterKind,
   type PageSize,
   type SortDirection,
 } from "@/frontend/components/ui/data-table-model";
@@ -50,6 +52,10 @@ export type DataTableFilter<T> = {
   label: string;
   accessor: keyof T;
   options: ReadonlyArray<{ label: string; value: string }>;
+  // "exact" compara la celda con el valor. "recent" trata la celda como fecha ISO
+  // y el valor como días hacia atrás desde hoy. Es serializable, así que sirve
+  // también desde páginas de servidor.
+  kind?: DataTableFilterKind;
 };
 type DataTableProps<T extends Record<string, unknown>> = {
   columns: ReadonlyArray<DataTableColumn<T>>;
@@ -60,6 +66,9 @@ type DataTableProps<T extends Record<string, unknown>> = {
   rowLabel?: string;
   caption?: string;
   getRowId?: (row: T) => string;
+  toolbarContent?: ReactNode;
+  additionalFilterActive?: boolean;
+  onClearAdditionalFilters?: () => void;
 };
 // Radix items cannot use an empty value. Keep the sentinel out of row filtering.
 const allValues = "__all_values__";
@@ -73,6 +82,9 @@ export function DataTable<T extends Record<string, unknown>>({
   rowLabel = "registros",
   caption = "Listado de registros",
   getRowId,
+  toolbarContent,
+  additionalFilterActive = false,
+  onClearAdditionalFilters,
 }: DataTableProps<T>) {
   const id = useId();
   const [query, setQuery] = useState("");
@@ -86,7 +98,7 @@ export function DataTable<T extends Record<string, unknown>>({
   const [pageSize, setPageSize] = useState<PageSize>(25);
   const [page, setPage] = useState(1);
   const hasFilters = Boolean(
-    query || Object.values(activeFilters).some(Boolean),
+    query || Object.values(activeFilters).some(Boolean) || additionalFilterActive,
   );
 
   const filteredData = useMemo(
@@ -102,7 +114,11 @@ export function DataTable<T extends Record<string, unknown>>({
         const matchesFilters = filters.every(
           (filter) =>
             !activeFilters[filter.id] ||
-            String(row[filter.accessor]) === activeFilters[filter.id],
+            matchesFilterValue(
+              row[filter.accessor],
+              activeFilters[filter.id],
+              filter.kind,
+            ),
         );
         return matchesQuery && matchesFilters;
       }),
@@ -120,6 +136,7 @@ export function DataTable<T extends Record<string, unknown>>({
   function clearFilters() {
     setQuery("");
     setActiveFilters({});
+    onClearAdditionalFilters?.();
     setPage(1);
   }
   function updateFilter(filterId: string, value: string) {
@@ -179,7 +196,8 @@ export function DataTable<T extends Record<string, unknown>>({
             </div>
           </div>
         )}
-        <div className="flex flex-wrap items-end gap-3">
+        <div className="flex flex-wrap items-end justify-end gap-3">
+          {toolbarContent}
           {filters.map((filter) => (
             <div key={filter.id} className="w-full sm:w-52">
               <label
@@ -206,8 +224,8 @@ export function DataTable<T extends Record<string, unknown>>({
               </Select>
             </div>
           ))}
-          {(searchKeys.length > 0 || filters.length > 0) && (
-            <Button variant="ghost" disabled={!hasFilters} onClick={clearFilters}>
+          {(searchKeys.length > 0 || filters.length > 0 || toolbarContent) && (
+            <Button className="mb-0.5" variant="ghost" disabled={!hasFilters} onClick={clearFilters}>
               Limpiar filtros
             </Button>
           )}

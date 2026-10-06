@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import {
   getPageNumbers,
   getTablePage,
+  matchesFilterValue,
   pageSizeOptions,
   sortTableRows,
 } from "../../src/frontend/components/ui/data-table-model";
@@ -52,4 +53,27 @@ test("pagination window includes endpoints without unbounded buttons", () => {
     10,
   ]);
   expect(getPageNumbers(1, 100)).toEqual([1, 2, "ellipsis", 100]);
+});
+test("exact filters compare the whole cell value", () => {
+  expect(matchesFilterValue("Karla Beltrán", "Karla Beltrán")).toBe(true);
+  expect(matchesFilterValue("Karla Beltrán", "Karla")).toBe(false);
+  expect(matchesFilterValue(null, "null")).toBe(true);
+});
+test("recent filters keep rows inside the day window", () => {
+  const now = Date.parse("2026-09-19T12:00:00.000Z");
+  const daysAgo = (days: number) =>
+    new Date(now - days * 24 * 60 * 60 * 1000).toISOString();
+  expect(matchesFilterValue(daysAgo(0), "7", "recent", now)).toBe(true);
+  expect(matchesFilterValue(daysAgo(7), "7", "recent", now)).toBe(true);
+  expect(matchesFilterValue(daysAgo(8), "7", "recent", now)).toBe(false);
+  expect(matchesFilterValue(daysAgo(89), "90", "recent", now)).toBe(true);
+  expect(matchesFilterValue(daysAgo(91), "90", "recent", now)).toBe(false);
+});
+test("recent filters reject invalid dates and invalid day counts", () => {
+  const now = Date.parse("2026-09-19T12:00:00.000Z");
+  expect(matchesFilterValue("no es fecha", "30", "recent", now)).toBe(false);
+  expect(matchesFilterValue(null, "30", "recent", now)).toBe(false);
+  expect(matchesFilterValue("2026-09-18T12:00:00.000Z", "abc", "recent", now)).toBe(
+    false,
+  );
 });
