@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, useFocusEffect } from "expo-router";
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import { StyleSheet, Text, TextInput, View, type ScrollView } from "react-native";
 import { createAppointment, getAvailability } from "@/api/appointments";
 import { getApiErrorMessage } from "@/api/errors";
 import { Calendar } from "@/components/Calendar";
@@ -18,6 +18,15 @@ export default function BookAppointmentScreen() {
   const [reason, setReason] = useState("");
   const [success, setSuccess] = useState(false);
   const [formKey, setFormKey] = useState(0);
+  // Al elegir fecha u horario la pantalla baja sola al paso siguiente.
+  const scrollRef = useRef<ScrollView>(null);
+  const pendingScroll = useRef<"slots" | "reason" | null>(null);
+
+  function scrollToSection(section: "slots" | "reason", y: number) {
+    if (pendingScroll.current !== section) return;
+    pendingScroll.current = null;
+    scrollRef.current?.scrollTo({ y: Math.max(y - 12, 0), animated: true });
+  }
 
   const availability = useQuery({
     queryKey: ["availability", date, duration],
@@ -39,6 +48,7 @@ export default function BookAppointmentScreen() {
     setSelected(null);
     setReason("");
     setSuccess(false);
+    pendingScroll.current = null;
     setFormKey((value) => value + 1);
     create.reset();
   }
@@ -63,11 +73,11 @@ export default function BookAppointmentScreen() {
   }
 
   return (
-    <AppScreen>
+    <AppScreen scrollRef={scrollRef}>
       <SectionHeader title="Solicitar cita" description="Elegí una fecha, un horario y contanos el motivo de tu consulta." />
       <AppCard>
         <Text style={uiStyles.label}>1. Fecha</Text>
-        <Calendar key={formKey} value={date} onChange={(key) => { setDate(key); setSelected(null); }} />
+        <Calendar key={formKey} value={date} onChange={(key) => { pendingScroll.current = "slots"; setDate(key); setSelected(null); }} />
         <Text style={styles.confirmation}>{date ? `Fecha elegida: ${formatDate(parseDateKey(date))}` : "Tocá un día del calendario para ver los horarios."}</Text>
       </AppCard>
       <AppCard>
@@ -78,39 +88,43 @@ export default function BookAppointmentScreen() {
           ))}
         </View>
       </AppCard>
-      {availability.isLoading && <LoadingState label="Buscando horarios disponibles..." />}
-      {availability.isError && <ErrorState message={getApiErrorMessage(availability.error, "No pudimos consultar la disponibilidad.")} onRetry={() => availability.refetch()} />}
-      {availability.data && (
-        <AppCard>
-          <Text style={uiStyles.label}>3. Horario disponible</Text>
-          {availability.data.dentists.length ? availability.data.dentists.map((dentist) => (
-            <View key={dentist.id} style={styles.dentist}>
-              <Text style={styles.dentistName}>{dentist.name}</Text>
-              <View style={styles.slots}>
-                {dentist.slots.map((slot) => (
-                  <AppButton
-                    key={slot.start}
-                    title={`${formatSlotTime(slot.start)} - ${formatSlotTime(slot.end)}`}
-                    variant={selected?.dentist === dentist.id && selected.start === slot.start ? "primary" : "secondary"}
-                    onPress={() => setSelected({ dentist: dentist.id, dentistName: dentist.name, start: slot.start, end: slot.end })}
-                  />
-                ))}
+      <View onLayout={(event) => scrollToSection("slots", event.nativeEvent.layout.y)}>
+        {availability.isLoading && <LoadingState label="Buscando horarios disponibles..." />}
+        {availability.isError && <ErrorState message={getApiErrorMessage(availability.error, "No pudimos consultar la disponibilidad.")} onRetry={() => availability.refetch()} />}
+        {availability.data && (
+          <AppCard>
+            <Text style={uiStyles.label}>3. Horario disponible</Text>
+            {availability.data.dentists.length ? availability.data.dentists.map((dentist) => (
+              <View key={dentist.id} style={styles.dentist}>
+                <Text style={styles.dentistName}>{dentist.name}</Text>
+                <View style={styles.slots}>
+                  {dentist.slots.map((slot) => (
+                    <AppButton
+                      key={slot.start}
+                      title={`${formatSlotTime(slot.start)} - ${formatSlotTime(slot.end)}`}
+                      variant={selected?.dentist === dentist.id && selected.start === slot.start ? "primary" : "secondary"}
+                      onPress={() => { pendingScroll.current = "reason"; setSelected({ dentist: dentist.id, dentistName: dentist.name, start: slot.start, end: slot.end }); }}
+                    />
+                  ))}
+                </View>
               </View>
-            </View>
-          )) : <EmptyState title="No hay horarios disponibles" description="Probá con otra fecha o duración." />}
-        </AppCard>
-      )}
+            )) : <EmptyState title="No hay horarios disponibles" description="Probá con otra fecha o duración." />}
+          </AppCard>
+        )}
+      </View>
       {selected && (
-        <AppCard>
-          <Text style={uiStyles.label}>4. Motivo de la consulta</Text>
-          <TextInput placeholder="Consulta, limpieza, control..." maxLength={150} value={reason} onChangeText={setReason} multiline style={[uiStyles.input, uiStyles.multiline]} />
-          <Text style={styles.counter}>{reason.length}/150</Text>
-          <Text style={styles.confirmation}>Odontólogo: {selected.dentistName}</Text>
-          <Text style={styles.confirmation}>Fecha: {formatSlotDateTime(selected.start)}</Text>
-          <Text style={styles.confirmation}>Horario: {formatSlotTime(selected.start)} - {formatSlotTime(selected.end)} ({duration} min)</Text>
-          <AppButton title="Enviar solicitud" loading={create.isPending} onPress={() => create.mutate()} />
-          {create.isError && <Text style={styles.error}>{getApiErrorMessage(create.error, "No pudimos enviar la solicitud.")}</Text>}
-        </AppCard>
+        <View onLayout={(event) => scrollToSection("reason", event.nativeEvent.layout.y)}>
+          <AppCard>
+            <Text style={uiStyles.label}>4. Motivo de la consulta</Text>
+            <TextInput placeholder="Consulta, limpieza, control..." maxLength={150} value={reason} onChangeText={setReason} multiline style={[uiStyles.input, uiStyles.multiline]} />
+            <Text style={styles.counter}>{reason.length}/150</Text>
+            <Text style={styles.confirmation}>Odontólogo: {selected.dentistName}</Text>
+            <Text style={styles.confirmation}>Fecha: {formatSlotDateTime(selected.start)}</Text>
+            <Text style={styles.confirmation}>Horario: {formatSlotTime(selected.start)} - {formatSlotTime(selected.end)} ({duration} min)</Text>
+            <AppButton title="Enviar solicitud" loading={create.isPending} onPress={() => create.mutate()} />
+            {create.isError && <Text style={styles.error}>{getApiErrorMessage(create.error, "No pudimos enviar la solicitud.")}</Text>}
+          </AppCard>
+        </View>
       )}
     </AppScreen>
   );
