@@ -5,7 +5,7 @@ export const colors = { primary: "#33A7DC", navy: "#16324F", muted: "#5B6B7A", b
 
 export function AppScreen({ children, scroll = true, contentStyle, ...props }: { children: ReactNode; scroll?: boolean; contentStyle?: object } & Omit<ScrollViewProps, "children" | "contentContainerStyle">) {
   const content = <View style={[styles.screenContent, contentStyle]}>{children}</View>;
-  return <SafeAreaView style={styles.safe}>{scroll ? <ScrollView {...props} contentContainerStyle={styles.scrollContent}>{content}</ScrollView> : content}</SafeAreaView>;
+  return <SafeAreaView style={styles.safe}>{scroll ? <ScrollView keyboardShouldPersistTaps="handled" {...props} contentContainerStyle={styles.scrollContent}>{content}</ScrollView> : content}</SafeAreaView>;
 }
 
 export function AppCard({ children, variant = "default", style }: { children: ReactNode; variant?: "default" | "highlight" | "action"; style?: object }) {
