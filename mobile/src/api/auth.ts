@@ -1,5 +1,5 @@
 import axios from "axios";
-import { api } from "./client";
+import { api, REQUEST_TIMEOUT_MS } from "./client";
 import type { User } from "@/types/api";
 
 const baseURL = process.env.EXPO_PUBLIC_API_URL;
@@ -7,12 +7,12 @@ const baseURL = process.env.EXPO_PUBLIC_API_URL;
 export type TokenResponse = { tokenType: "Bearer"; accessToken: string; refreshToken: string; expiresIn: number; user: User };
 
 export async function login(correo: string, password: string) {
-  const response = await axios.post<{ data: TokenResponse }>(`${baseURL}/api/v1/auth/mobile/login`, { correo, password });
+  const response = await axios.post<{ data: TokenResponse }>(`${baseURL}/api/v1/auth/mobile/login`, { correo, password }, { timeout: REQUEST_TIMEOUT_MS });
   return response.data.data;
 }
 
 export async function refresh(refreshToken: string) {
-  const response = await axios.post<{ data: TokenResponse }>(`${baseURL}/api/v1/auth/mobile/refresh`, { refreshToken });
+  const response = await axios.post<{ data: TokenResponse }>(`${baseURL}/api/v1/auth/mobile/refresh`, { refreshToken }, { timeout: REQUEST_TIMEOUT_MS });
   return response.data.data;
 }
 

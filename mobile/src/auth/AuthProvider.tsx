@@ -1,5 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type PropsWithChildren } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import * as authApi from "@/api/auth";
+import { unregisterCurrentDeviceToken } from "@/api/notifications";
 import { configureAuth, setAccessToken } from "@/api/client";
 import { sessionStorage } from "@/storage/secure-storage";
 import type { User } from "@/types/api";
@@ -16,6 +18,7 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: PropsWithChildren) {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<User | null>(null);
   const [accessToken, setLocalAccessToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -25,8 +28,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setUser(null);
     setLocalAccessToken(null);
     setAccessToken(null);
+    queryClient.clear();
     await sessionStorage.clear();
-  }, []);
+  }, [queryClient]);
 
   const refreshSession = useCallback(async () => {
     const refreshToken = await sessionStorage.getRefreshToken();
@@ -59,6 +63,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     refreshSession,
     async signIn(correo, password) {
       setSessionMessage(null);
+      queryClient.clear();
       const result = await authApi.login(correo, password);
       setUser(result.user);
       setLocalAccessToken(result.accessToken);
@@ -66,10 +71,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
       await sessionStorage.setRefreshToken(result.refreshToken);
     },
     async signOut() {
-      try { if (accessToken) await authApi.logout(); } finally { await clearSession(); }
+      try { if (accessToken) { await unregisterCurrentDeviceToken(); await authApi.logout(); } } finally { await clearSession(); }
     },
     sessionMessage,
-  }), [accessToken, clearSession, loading, refreshSession, sessionMessage, user]);
+  }), [accessToken, clearSession, loading, queryClient, refreshSession, sessionMessage, user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

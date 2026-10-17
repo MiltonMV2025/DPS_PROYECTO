@@ -3,7 +3,9 @@ import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 const baseURL = process.env.EXPO_PUBLIC_API_URL;
 if (!baseURL) console.warn("EXPO_PUBLIC_API_URL is not configured");
 
-export const api = axios.create({ baseURL, headers: { "Content-Type": "application/json" } });
+export const REQUEST_TIMEOUT_MS = 15000;
+
+export const api = axios.create({ baseURL, timeout: REQUEST_TIMEOUT_MS, headers: { "Content-Type": "application/json" } });
 
 let accessToken: string | null = null;
 let refreshAccessToken: (() => Promise<string | null>) | null = null;

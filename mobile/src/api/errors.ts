@@ -6,6 +6,8 @@ export function getApiErrorMessage(error: unknown, fallback = "No pudimos comple
   if (!axios.isAxiosError<ApiErrorPayload>(error)) return error instanceof Error ? error.message : fallback;
   if (!error.response) return "No pudimos conectarnos con la clínica. Revisá tu conexión.";
   const { status } = error.response;
+  const apiError = error.response.data?.error;
+  if (status === 401 && apiError?.code === "INVALID_CREDENTIALS") return apiError.message ?? "Correo o contraseña incorrectos.";
   if (status === 401) return "Tu sesión expiró. Iniciá sesión nuevamente.";
   if (status === 403) return "Tu cuenta no tiene permisos para realizar esta acción.";
   if (status === 404) return "No encontramos la información solicitada.";
