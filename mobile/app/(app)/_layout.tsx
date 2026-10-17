@@ -22,7 +22,7 @@ export default function AppLayout() {
   }, [user]);
   if (!user) return <Redirect href="/(auth)/login" />;
   const icon = (glyph: string, color: ColorValue, size: number) => <Text style={{ color, fontSize: size, lineHeight: size }}>{glyph}</Text>;
-  return <Tabs screenOptions={{ tabBarActiveTintColor: "#33A7DC", tabBarInactiveTintColor: "#5B6B7A", tabBarLabelStyle: { fontSize: 11 }, tabBarStyle: { minHeight: 64, paddingTop: 6, paddingBottom: 6 } }}>
+  return <Tabs screenOptions={{ headerShown: false, tabBarActiveTintColor: "#33A7DC", tabBarInactiveTintColor: "#5B6B7A", tabBarLabelStyle: { fontSize: 11 }, tabBarStyle: { minHeight: 64, paddingTop: 6, paddingBottom: 6 } }}>
     <Tabs.Screen name="index" options={{ title: "Inicio", tabBarIcon: ({ color, size }) => icon("\u2302", color, size) }} />
     <Tabs.Screen name="appointments" options={{ title: "Mis citas", tabBarIcon: ({ color, size }) => icon("\u25A3", color, size) }} />
     <Tabs.Screen name="book-appointment" options={{ title: "Agendar", tabBarIcon: ({ color, size }) => icon("+", color, size) }} />

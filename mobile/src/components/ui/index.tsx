@@ -1,11 +1,12 @@
-import { ActivityIndicator, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View, type PressableProps, type ScrollViewProps } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View, type PressableProps, type ScrollViewProps } from "react-native";
 import type { ReactNode } from "react";
 
 export const colors = { primary: "#33A7DC", navy: "#16324F", muted: "#5B6B7A", background: "#F4FAFF", border: "#D6E5F0", white: "#FFFFFF", danger: "#B42318", dangerBackground: "#FFF1F0", success: "#167C52", successBackground: "#ECFDF3", info: "#2563A6", infoBackground: "#EFF6FF" } as const;
 
 export function AppScreen({ children, scroll = true, contentStyle, ...props }: { children: ReactNode; scroll?: boolean; contentStyle?: object } & Omit<ScrollViewProps, "children" | "contentContainerStyle">) {
   const content = <View style={[styles.screenContent, contentStyle]}>{children}</View>;
-  return <SafeAreaView style={styles.safe}>{scroll ? <ScrollView keyboardShouldPersistTaps="handled" {...props} contentContainerStyle={styles.scrollContent}>{content}</ScrollView> : content}</SafeAreaView>;
+  return <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>{scroll ? <ScrollView keyboardShouldPersistTaps="handled" {...props} contentContainerStyle={styles.scrollContent}>{content}</ScrollView> : content}</SafeAreaView>;
 }
 
 export function AppCard({ children, variant = "default", style }: { children: ReactNode; variant?: "default" | "highlight" | "action"; style?: object }) {
