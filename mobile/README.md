@@ -2,6 +2,9 @@
 
 Aplicación móvil de Sonrisa Digital construida con React Native, Expo y Expo Router. Permite que pacientes autenticados consulten su información clínica y gestionen solicitudes de citas desde un flujo móvil guiado.
 
+## VIDEO DE ENTREGA
+https://youtu.be/_Eg7WFfrVI4?si=FqqUybEVqWwuD88e
+
 ## Integrantes
 
 | Estudiante | Carné |
