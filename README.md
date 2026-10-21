@@ -221,33 +221,33 @@ npm run db:seed -- --confirm-seed
 
 ## Variables de entorno
 
-Configurar estas variables en .env.local y nunca publicar valores reales:
+Consultar `.env.example`. No agregar secretos reales al repositorio.
 
-| Variable | Propósito |
-|---|---|
-| DATABASE_URL | Conexión MySQL, por ejemplo mysql://usuario:clave@localhost:3306/sonrisa_digital |
-| AUTH_SECRET | Firma de las sesiones JWT |
-| INTERNAL_API_SECRET | Protección de APIs internas de solo lectura |
-| INTERNAL_API_BASE_URL | URL base usada para llamadas internas |
+- `DATABASE_URL`: connection string MySQL con el formato
+  `mysql://username:password@host:3306/database_name`. Las credenciales deben
+  estar codificadas como URL si contienen caracteres reservados. El pool se crea
+  de forma lazy en `src/backend/database/pool.ts`.
+- `AUTH_SECRET`: secreto usado para firmar los tokens de sesión. Generar uno con
+  `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"`.
+- `MOBILE_AUTH_SECRET`: secreto independiente para los access tokens Bearer de Mobile.
+- `INTERNAL_API_SECRET` e `INTERNAL_API_BASE_URL`: protegen los Route Handlers
+  internos de solo lectura usados por el dashboard.
 
-Generar un secreto de autenticación:
+## Funcionalidades
 
-~~~bash
-node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
-~~~
-
-## Ejecución y verificación
-
-~~~bash
-npm run dev          # Desarrollo en http://localhost:3000
-npm run lint         # ESLint
-npm run typecheck    # TypeScript estricto
-npm run build        # Build de producción
-npm run test:ui      # Pruebas Playwright
-npm run format:check # Verificación de formato
-~~~
-
-Antes de abrir un Pull Request deben pasar lint, typecheck y build.
+- **Autenticación**: registro de pacientes, inicio de sesión y cierre de sesión.
+  Las sesiones viajan en una cookie firmada (JWT) y las rutas del panel están
+  protegidas por middleware.
+- **Roles y permisos**: administrador, odontólogo, recepcionista y paciente. La
+  navegación y las páginas sensibles se habilitan según el rol; las operaciones
+  de escritura se validan también en el servidor.
+- **Gestión de citas (CRUD)**: crear citas, cambiar su estado
+  (confirmar, completar, cancelar) y eliminarlas. Incluye validación de choques
+  de agenda por duración y notificación a la lista de espera al cancelar.
+- **Dashboard y reportes**: métricas operativas calculadas en la base de datos y
+  una gráfica de citas por estado.
+- **Consultas de apoyo**: pacientes, historiales, inventario, proveedores y
+  usuarios en tablas con búsqueda, filtros y paginación.
 
 ## Cuentas de demostración
 
@@ -295,17 +295,37 @@ Las relaciones principales son:
 
 ## Despliegue
 
-La aplicación puede desplegarse en Vercel como un único proyecto Next.js.
-Configurar en el entorno de Vercel las mismas variables de producción y usar
-una instancia MySQL accesible públicamente. Ejecutar las migraciones de forma
-controlada antes de habilitar el tráfico de usuarios.
+La aplicación se despliega en Vercel. Configurar `DATABASE_URL`, `AUTH_SECRET`,
+`INTERNAL_API_SECRET` e `INTERNAL_API_BASE_URL` (la URL pública del despliegue)
+como variables de entorno del proyecto.
+## Soporte Mobile
 
-## Documentación adicional
+El repositorio mantiene una única API Next.js para Web y Mobile:
 
-- [Arquitectura](docs/ARCHITECTURE.md)
-- [Componentes de UI](docs/UI_COMPONENTS.md)
-- [Guía de contribución](docs/CONTRIBUTING.md)
+```text
+Web    -- cookie JWT --> Route Handlers --> MySQL
+Mobile -- Bearer JWT --> Route Handlers --> MySQL
+```
 
-## Licencia académica
+La autenticación Mobile usa access tokens de corta duración y refresh tokens
+opacos rotatorios persistidos como hash en `Sesiones_Mobile`. La autenticación
+Web basada en `sonrisa_session` permanece separada.
 
-Proyecto desarrollado con fines académicos para la entrega de la Etapa 2.
+La aplicación Expo está en `mobile/` y usa su propio `package.json`. Para
+prepararla localmente:
+
+```powershell
+cd mobile
+npm install
+Copy-Item .env.example .env
+npx expo start
+```
+
+Configurar `EXPO_PUBLIC_API_URL` con la URL pública de la API. Los secretos
+`DATABASE_URL`, `AUTH_SECRET`, `MOBILE_AUTH_SECRET` e `INTERNAL_API_SECRET`
+son exclusivos del backend.
+
+Mobile puede registrar tokens de dispositivo mediante
+`POST /api/v1/notifications/devices`. Firebase/Expo Notifications se utiliza
+únicamente para push; MySQL continúa siendo la fuente de verdad y no se usa
+Firestore.

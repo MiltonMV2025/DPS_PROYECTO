@@ -3,3 +3,8 @@ export { createAuthService, type AuthService } from "./auth.service";
 export { createAuthRepository, type AuthRepository } from "./auth.repository";
 export { createSessionToken, verifySessionToken, SESSION_COOKIE, sessionCookieOptions } from "./session";
 export type { SessionUser } from "./auth.types";
+export { createMobileAuthController, type MobileAuthController } from "./mobile-auth.controller";
+export { createMobileAuthService, type MobileAuthService } from "./mobile-auth.service";
+export { createMobileSessionRepository, type MobileSessionRepository } from "./mobile-session.repository";
+export { requireMobileUser, requireMobileRoles } from "./mobile-bearer";
+export type { MobileAuthContext, MobileTokenResponse } from "./mobile-auth.types";
