@@ -38,6 +38,8 @@ export function createAppointmentService(
 
     listForPatient: (userId: number) => repository.listForPatient(userId),
 
+    listDentists: () => repository.listDentistOptions(),
+
     async manage(patientUserId?: number) {
       const [appointments, patients, dentists] = await Promise.all([
         repository.listUpcoming(patientUserId),
