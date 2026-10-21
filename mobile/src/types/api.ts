@@ -2,6 +2,7 @@ export type UserRole = "administrador" | "odontologo" | "recepcionista" | "pacie
 
 export type User = { id: number; nombre: string; correo: string; rol: UserRole };
 export type ApiError = { error: { code: string; message: string } };
+export type Dentist = { id: number; name: string };
 
 export type Appointment = {
   id: number;
@@ -42,4 +43,4 @@ export type ClinicalRecord = {
   createdAt: string;
 };
 
-export type Availability = { date: string; durationMin: number; dentists: Array<{ id: number; name: string; slots: Array<{ start: string; end: string }> }> };
+export type Availability = { date: string; durationMin: number; dentists: Array<Dentist & { slots: Array<{ start: string; end: string }> }> };

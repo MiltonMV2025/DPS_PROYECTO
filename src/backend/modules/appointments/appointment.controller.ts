@@ -11,6 +11,9 @@ export function createAppointmentController(service: AppointmentService = create
     listForPatient(userId: number): Promise<ManagedAppointment[]> {
       return service.listForPatient(userId);
     },
+    listDentists() {
+      return service.listDentists();
+    },
     manage(patientUserId?: number) {
       return service.manage(patientUserId);
     },

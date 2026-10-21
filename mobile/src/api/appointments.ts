@@ -1,12 +1,17 @@
 import { api } from "./client";
-import type { Appointment, Availability } from "@/types/api";
+import type { Appointment, Availability, Dentist } from "@/types/api";
 
 export async function listAppointments() {
   const response = await api.get<{ data: Appointment[] }>("/api/v1/me/appointments");
   return response.data.data;
 }
 
-export async function getAvailability(params: { date: string; duracionMin: number }) {
+export async function listDentists() {
+  const response = await api.get<{ data: Dentist[] }>("/api/v1/appointments/dentists");
+  return response.data.data;
+}
+
+export async function getAvailability(params: { date: string; duracionMin: number; idOdontologo: number }) {
   const response = await api.get<{ data: Availability }>("/api/v1/appointments/availability", { params });
   return response.data.data;
 }
