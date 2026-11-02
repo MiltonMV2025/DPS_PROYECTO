@@ -10,12 +10,25 @@
       "expo-router",
       "expo-secure-store",
       "expo-notifications",
-      "expo-status-bar"
+      "expo-status-bar",
+      [
+        "expo-build-properties",
+        {
+          "android": { "kotlinVersion": "2.1.20" },
+          "ios": { "useFrameworks": "dynamic" }
+        }
+      ],
+      "./plugins/with-kotlin-gradle-classpath",
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth",
+      "react-native-nitro-google-signin"
     ],
     "android": {
+      "googleServicesFile": "./google-services.json",
       "package": "com.sonrisadigital.mobile"
     },
     "ios": {
+      "googleServicesFile": "./GoogleService-Info.plist",
       "bundleIdentifier": "com.sonrisadigital.mobile"
     }
   }

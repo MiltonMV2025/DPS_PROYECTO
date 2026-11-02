@@ -3,8 +3,17 @@ import { SignJWT } from "jose";
 import { ApplicationError } from "@/backend/errors";
 import { getMobileAuthSecret } from "@/backend/config";
 import { createAuthService, type AuthService } from "./auth.service";
-import { createMobileSessionRepository, type MobileSessionRepository } from "./mobile-session.repository";
+import {
+  createMobileSessionRepository,
+  type MobileSessionRepository,
+} from "./mobile-session.repository";
+import {
+  createFirebaseIdentityService,
+  type FirebaseIdentityService,
+} from "./firebase-identity.service";
 import type { LoginInput } from "./auth.schema";
+import type { MobileGoogleRegisterInput } from "./mobile-auth.schema";
+import type { FirebaseIdentity } from "./firebase-identity.service";
 import {
   MOBILE_ACCESS_TOKEN_AUDIENCE,
   MOBILE_ACCESS_TOKEN_EXPIRES_IN_SECONDS,
@@ -30,7 +39,10 @@ function refreshExpiration(): Date {
   return value;
 }
 
-async function createAccessToken(user: SessionUser, familyToken: string): Promise<string> {
+async function createAccessToken(
+  user: SessionUser,
+  familyToken: string,
+): Promise<string> {
   return new SignJWT({
     nombre: user.nombre,
     correo: user.correo,
@@ -46,7 +58,11 @@ async function createAccessToken(user: SessionUser, familyToken: string): Promis
     .sign(key());
 }
 
-function tokenResponse(user: SessionUser, accessToken: string, refreshToken: string): MobileTokenResponse {
+function tokenResponse(
+  user: SessionUser,
+  accessToken: string,
+  refreshToken: string,
+): MobileTokenResponse {
   return {
     tokenType: "Bearer",
     accessToken,
@@ -59,51 +75,132 @@ function tokenResponse(user: SessionUser, accessToken: string, refreshToken: str
 export function createMobileAuthService(
   authService: AuthService = createAuthService(),
   sessions: MobileSessionRepository = createMobileSessionRepository(),
+  firebaseIdentityService: FirebaseIdentityService = createFirebaseIdentityService(),
+  verifyIdentity?: (idToken: string) => Promise<FirebaseIdentity>,
 ) {
+  async function issueSession(user: SessionUser): Promise<MobileTokenResponse> {
+    if (user.rol !== "paciente") {
+      throw new ApplicationError(
+        "MOBILE_ROLE_NOT_ALLOWED",
+        "La aplicación Mobile está disponible para cuentas de paciente.",
+        403,
+      );
+    }
+    const familyToken = randomUUID();
+    const refreshToken = createRefreshToken();
+    await sessions.create({
+      userId: user.id,
+      familyToken,
+      tokenHash: hashRefreshToken(refreshToken),
+      expiresAt: refreshExpiration(),
+    });
+    return tokenResponse(
+      user,
+      await createAccessToken(user, familyToken),
+      refreshToken,
+    );
+  }
+
   return {
     async login(input: LoginInput): Promise<MobileTokenResponse> {
       const user = await authService.login(input);
-      if (user.rol !== "paciente") {
-        throw new ApplicationError("MOBILE_ROLE_NOT_ALLOWED", "La aplicación Mobile está disponible para cuentas de paciente.", 403);
-      }
-      const familyToken = randomUUID();
-      const refreshToken = createRefreshToken();
-      await sessions.create({
-        userId: user.id,
-        familyToken,
-        tokenHash: hashRefreshToken(refreshToken),
-        expiresAt: refreshExpiration(),
-      });
-      return tokenResponse(user, await createAccessToken(user, familyToken), refreshToken);
+      return issueSession(user);
+    },
+
+    async loginWithFirebase(idToken: string): Promise<MobileTokenResponse> {
+      const identity = await (
+        verifyIdentity ??
+        (await import("./firebase-admin")).verifyFirebaseIdToken
+      )(idToken);
+      const user = await firebaseIdentityService.resolveMobilePatient(identity);
+      return issueSession(user);
+    },
+
+    async registerWithGoogle(
+      input: MobileGoogleRegisterInput,
+    ): Promise<MobileTokenResponse> {
+      const identity = await (
+        verifyIdentity ??
+        (await import("./firebase-admin")).verifyFirebaseIdToken
+      )(input.idToken);
+      const user = await firebaseIdentityService.registerMobilePatient(
+        identity,
+        {
+          nombre: input.nombre,
+          telefono: input.telefono,
+          fechaNacimiento: input.fechaNacimiento,
+        },
+      );
+      return issueSession(user);
     },
 
     async refresh(refreshToken: string): Promise<MobileTokenResponse> {
-      if (!refreshToken.trim()) throw new ApplicationError("INVALID_REFRESH_TOKEN", "El refresh token no es válido.", 401);
+      if (!refreshToken.trim())
+        throw new ApplicationError(
+          "INVALID_REFRESH_TOKEN",
+          "El refresh token no es válido.",
+          401,
+        );
       const tokenHash = hashRefreshToken(refreshToken);
       return sessions.withTransaction(async (connection) => {
-        const current = await sessions.findByTokenHashForUpdate(tokenHash, connection);
-        if (!current) throw new ApplicationError("INVALID_REFRESH_TOKEN", "El refresh token no es válido.", 401);
+        const current = await sessions.findByTokenHashForUpdate(
+          tokenHash,
+          connection,
+        );
+        if (!current)
+          throw new ApplicationError(
+            "INVALID_REFRESH_TOKEN",
+            "El refresh token no es válido.",
+            401,
+          );
 
         if (current.revokedAt || current.replacedBy !== null) {
-          await sessions.revokeFamily(current.familyToken, "refresh_reuse_detected", connection);
-          throw new ApplicationError("INVALID_REFRESH_TOKEN", "El refresh token no es válido.", 401);
+          await sessions.revokeFamily(
+            current.familyToken,
+            "refresh_reuse_detected",
+            connection,
+          );
+          throw new ApplicationError(
+            "INVALID_REFRESH_TOKEN",
+            "El refresh token no es válido.",
+            401,
+          );
         }
         if (current.expiresAt.getTime() <= Date.now()) {
-          await sessions.revokeFamily(current.familyToken, "expired", connection);
-          throw new ApplicationError("INVALID_REFRESH_TOKEN", "El refresh token expiró.", 401);
+          await sessions.revokeFamily(
+            current.familyToken,
+            "expired",
+            connection,
+          );
+          throw new ApplicationError(
+            "INVALID_REFRESH_TOKEN",
+            "El refresh token expiró.",
+            401,
+          );
         }
         if (!current.user.activo) {
-          await sessions.revokeFamily(current.familyToken, "account_disabled", connection);
-          throw new ApplicationError("ACCOUNT_DISABLED", "La cuenta está desactivada.", 403);
+          await sessions.revokeFamily(
+            current.familyToken,
+            "account_disabled",
+            connection,
+          );
+          throw new ApplicationError(
+            "ACCOUNT_DISABLED",
+            "La cuenta está desactivada.",
+            403,
+          );
         }
 
         const nextRefreshToken = createRefreshToken();
-        const nextId = await sessions.create({
-          userId: current.user.id,
-          familyToken: current.familyToken,
-          tokenHash: hashRefreshToken(nextRefreshToken),
-          expiresAt: refreshExpiration(),
-        }, connection);
+        const nextId = await sessions.create(
+          {
+            userId: current.user.id,
+            familyToken: current.familyToken,
+            tokenHash: hashRefreshToken(nextRefreshToken),
+            expiresAt: refreshExpiration(),
+          },
+          connection,
+        );
         await sessions.markRotated(current.id, nextId, connection);
 
         const user: SessionUser = {
@@ -112,7 +209,11 @@ export function createMobileAuthService(
           correo: current.user.correo,
           rol: current.user.rol,
         };
-        return tokenResponse(user, await createAccessToken(user, current.familyToken), nextRefreshToken);
+        return tokenResponse(
+          user,
+          await createAccessToken(user, current.familyToken),
+          nextRefreshToken,
+        );
       });
     },
 

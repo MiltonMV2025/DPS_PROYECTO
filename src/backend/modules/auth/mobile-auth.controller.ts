@@ -1,13 +1,32 @@
 import { parseInput } from "@/backend/utils";
 import { loginSchema } from "./auth.schema";
-import { mobileRefreshSchema } from "./mobile-auth.schema";
-import { createMobileAuthService, type MobileAuthService } from "./mobile-auth.service";
+import {
+  mobileFirebaseLoginSchema,
+  mobileGoogleRegisterSchema,
+  mobileRefreshSchema,
+} from "./mobile-auth.schema";
+import {
+  createMobileAuthService,
+  type MobileAuthService,
+} from "./mobile-auth.service";
 import type { MobileAuthContext } from "./mobile-auth.types";
 
-export function createMobileAuthController(service: MobileAuthService = createMobileAuthService()) {
+export function createMobileAuthController(
+  service: MobileAuthService = createMobileAuthService(),
+) {
   return {
     login(raw: unknown) {
       return service.login(parseInput(loginSchema, raw));
+    },
+    loginWithFirebase(raw: unknown) {
+      return service.loginWithFirebase(
+        parseInput(mobileFirebaseLoginSchema, raw).idToken,
+      );
+    },
+    registerWithGoogle(raw: unknown) {
+      return service.registerWithGoogle(
+        parseInput(mobileGoogleRegisterSchema, raw),
+      );
     },
     refresh(raw: unknown) {
       return service.refresh(parseInput(mobileRefreshSchema, raw).refreshToken);
@@ -21,4 +40,6 @@ export function createMobileAuthController(service: MobileAuthService = createMo
   };
 }
 
-export type MobileAuthController = ReturnType<typeof createMobileAuthController>;
+export type MobileAuthController = ReturnType<
+  typeof createMobileAuthController
+>;

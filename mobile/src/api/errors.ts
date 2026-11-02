@@ -2,17 +2,43 @@ import axios from "axios";
 
 type ApiErrorPayload = { error?: { code?: string; message?: string } };
 
-export function getApiErrorMessage(error: unknown, fallback = "No pudimos completar la solicitud.") {
-  if (!axios.isAxiosError<ApiErrorPayload>(error)) return error instanceof Error ? error.message : fallback;
-  if (!error.response) return "No pudimos conectarnos con la clínica. Revisá tu conexión.";
+export function getApiErrorMessage(
+  error: unknown,
+  fallback = "No pudimos completar la solicitud.",
+) {
+  if (!axios.isAxiosError<ApiErrorPayload>(error))
+    return error instanceof Error ? error.message : fallback;
+  if (!error.response)
+    return "No pudimos conectarnos con la clínica. Revisá tu conexión.";
   const { status } = error.response;
   const apiError = error.response.data?.error;
-  if (status === 401 && apiError?.code === "INVALID_CREDENTIALS") return apiError.message ?? "Correo o contraseña incorrectos.";
+  if (status === 401 && apiError?.code === "GOOGLE_ACCOUNT_NOT_LINKED")
+    return (
+      apiError.message ??
+      "No encontramos una cuenta clínica activa con este correo."
+    );
+  if (status === 401 && apiError?.code === "GOOGLE_ACCOUNT_MISMATCH")
+    return (
+      apiError.message ??
+      "Esta cuenta de Google ya está asociada a otro usuario."
+    );
+  if (status === 401 && apiError?.code === "INVALID_GOOGLE_IDENTITY")
+    return (
+      apiError.message ??
+      "No pudimos validar la cuenta de Google. Volvé a intentarlo."
+    );
+  if (status === 401 && apiError?.code === "INVALID_CREDENTIALS")
+    return apiError.message ?? "Correo o contraseña incorrectos.";
   if (status === 401) return "Tu sesión expiró. Iniciá sesión nuevamente.";
-  if (status === 403) return "Tu cuenta no tiene permisos para realizar esta acción.";
+  if (status === 403)
+    return "Tu cuenta no tiene permisos para realizar esta acción.";
   if (status === 404) return "No encontramos la información solicitada.";
   if (status === 409) return "Ese horario ya no está disponible. Elegí otro.";
-  if (status === 400 || status === 422) return error.response.data?.error?.message ?? "Revisá los datos ingresados.";
-  if (status >= 500) return "El servicio no está disponible. Intentá nuevamente más tarde.";
+  if (status === 400 || status === 422)
+    return (
+      error.response.data?.error?.message ?? "Revisá los datos ingresados."
+    );
+  if (status >= 500)
+    return "El servicio no está disponible. Intentá nuevamente más tarde.";
   return error.response.data?.error?.message ?? fallback;
 }

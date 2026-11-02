@@ -6,10 +6,9 @@ const password = z
   .regex(/[A-Za-z]/, "La contraseña debe incluir una letra")
   .regex(/[0-9]/, "La contraseña debe incluir un número");
 
-export const registerSchema = z.object({
+export const patientProfileSchema = z.object({
   nombre: z.string().trim().min(3, "Ingresá tu nombre completo").max(120),
   correo: z.string().trim().toLowerCase().email("Correo inválido").max(150),
-  password,
   telefono: z
     .string()
     .trim()
@@ -21,6 +20,8 @@ export const registerSchema = z.object({
       return !Number.isNaN(date.getTime()) && date < new Date();
     }, "Fecha de nacimiento inválida"),
 });
+
+export const registerSchema = patientProfileSchema.extend({ password });
 
 export const loginSchema = z.object({
   correo: z.string().trim().toLowerCase().email("Correo inválido"),

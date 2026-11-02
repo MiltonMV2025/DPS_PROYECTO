@@ -4,5 +4,11 @@ import { handleAuth, readJson } from "../../_handler";
 export const dynamic = "force-dynamic";
 
 export function POST(request: Request) {
-  return handleAuth(async () => Response.json({ data: await createMobileAuthController().login(await readJson(request)) }));
+  return handleAuth(
+    async () =>
+      Response.json({
+        data: await createMobileAuthController().login(await readJson(request)),
+      }),
+    "mobile.password.login",
+  );
 }
