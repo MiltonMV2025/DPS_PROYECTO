@@ -2,6 +2,12 @@ import axios from "axios";
 
 type ApiErrorPayload = { error?: { code?: string; message?: string } };
 
+export function getApiErrorCode(error: unknown) {
+  return axios.isAxiosError<ApiErrorPayload>(error)
+    ? error.response?.data?.error?.code
+    : undefined;
+}
+
 export function getApiErrorMessage(
   error: unknown,
   fallback = "No pudimos completar la solicitud.",

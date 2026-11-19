@@ -9,6 +9,7 @@ import {
 } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import * as authApi from "@/api/auth";
+import { getApiErrorCode } from "@/api/errors";
 import { unregisterCurrentDeviceToken } from "@/api/notifications";
 import { configureAuth, setAccessToken } from "@/api/client";
 import { sessionStorage } from "@/storage/secure-storage";
@@ -22,11 +23,19 @@ import {
 } from "@/auth/google-auth-diagnostics";
 import type { User } from "@/types/api";
 
+export type GoogleAccount = { idToken: string; email: string; name: string };
+
+/** Un solo botón de Google: inicia sesión si la cuenta existe o pide completar el registro si no. */
+export type GoogleSignInResult =
+  | { status: "signed-in" }
+  | { status: "cancelled" }
+  | { status: "needs-registration"; account: GoogleAccount };
+
 type AuthContextValue = {
   user: User | null;
   loading: boolean;
   signIn: (correo: string, password: string) => Promise<void>;
-  signInWithGoogle: () => Promise<boolean>;
+  signInWithGoogle: () => Promise<GoogleSignInResult>;
   registerWithGoogle: (input: {
     idToken: string;
     nombre: string;
@@ -105,24 +114,31 @@ export function AuthProvider({ children }: PropsWithChildren) {
       async signInWithGoogle() {
         setSessionMessage(null);
         queryClient.clear();
+        let account: GoogleAccount | null = null;
         try {
           const firebaseUser = await signInWithGoogleFirebase();
-          if (!firebaseUser) return false;
-          let idToken: string;
+          if (!firebaseUser) return { status: "cancelled" };
           try {
-            idToken = await firebaseUser.getIdToken();
+            account = {
+              idToken: await firebaseUser.getIdToken(),
+              email: firebaseUser.email ?? "",
+              name: firebaseUser.displayName ?? "",
+            };
             logGoogleAuthStage("firebase_id_token");
           } catch (error) {
             logGoogleAuthFailure("firebase_id_token", error);
             throw error;
           }
-          const result = await authApi.loginWithGoogle(idToken);
+          const result = await authApi.loginWithGoogle(account.idToken);
           setUser(result.user);
           setLocalAccessToken(result.accessToken);
           setAccessToken(result.accessToken);
           await sessionStorage.setRefreshToken(result.refreshToken);
-          return true;
+          return { status: "signed-in" };
         } catch (error) {
+          // La sesión de Google queda abierta para registrar la cuenta con el mismo token.
+          if (account && getApiErrorCode(error) === "GOOGLE_ACCOUNT_NOT_LINKED")
+            return { status: "needs-registration", account };
           await clearSession();
           throw error;
         }
