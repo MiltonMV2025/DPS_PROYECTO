@@ -14,14 +14,19 @@
       [
         "expo-build-properties",
         {
-          "android": { "kotlinVersion": "2.1.20" },
-          "ios": { "useFrameworks": "dynamic" }
+          "android": {
+            "kotlinVersion": "2.1.20"
+          },
+          "ios": {
+            "useFrameworks": "dynamic"
+          }
         }
       ],
       "./plugins/with-kotlin-gradle-classpath",
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
-      "react-native-nitro-google-signin"
+      "react-native-nitro-google-signin",
+      "@react-native-community/datetimepicker"
     ],
     "android": {
       "googleServicesFile": "./google-services.json",
