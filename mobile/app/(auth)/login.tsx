@@ -282,9 +282,6 @@ export default function LoginScreen() {
                 onPress={continueWithGoogle}
                 loading={busy}
               />
-              <Text style={styles.hint}>
-                Si es tu primera vez, te pediremos algunos datos para crear tu cuenta.
-              </Text>
             </>
           )}
         </AppCard>
@@ -306,5 +303,4 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   googleEmail: { color: colors.muted, paddingVertical: 8 },
-  hint: { color: colors.muted, fontSize: 13, textAlign: "center", lineHeight: 18 },
 });
