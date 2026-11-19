@@ -77,7 +77,7 @@ EXPO_PUBLIC_API_URL=http://10.0.2.2:3000
 5. En el backend local y en el entorno desplegado, configurá FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL y FIREBASE_PRIVATE_KEY como secretos del servidor. La clave privada se guarda en una sola línea con saltos escapados como \n. Nunca uses estas variables con EXPO_PUBLIC_ ni las copies a la app móvil.
 6. Aplicá la migración 007_firebase_auth.sql antes de habilitar el endpoint de Google. La migración agrega un UID nullable y único; los usuarios actuales no cambian hasta vincularse por primera vez con un correo Google verificado.
 
-El acceso Google solo se vincula a un usuario paciente activo que ya exista en la clínica. No crea cuentas ni asigna roles. El login existente con correo/contraseña sigue disponible.
+La pantalla de acceso tiene un solo botón «Continuar con Google». Si el correo ya pertenece a un paciente activo, inicia sesión y vincula la cuenta; si no existe, muestra el formulario «Completar registro» (nombre, teléfono con formato `0000-0000` y fecha de nacimiento con selector nativo) y crea una cuenta con rol paciente. El login existente con correo/contraseña sigue disponible. Las validaciones y los resultados de los formularios se muestran con toasts.
 
 ### Crear y ejecutar una development build
 
