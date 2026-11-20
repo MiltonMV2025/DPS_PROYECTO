@@ -14,7 +14,7 @@ const columns: DataTableColumn<Record<string, unknown>>[] = [
   { id: "diagnosis", header: "Diagnóstico", accessor: "diagnosis" },
   { id: "treatment", header: "Tratamiento", accessor: "treatment" },
   { id: "observations", header: "Observaciones", accessor: "observations" },
-  { id: "createdAt", header: "Creado", accessor: "createdAt", sortable: true },
+  { id: "createdAt", header: "Creado", accessor: "createdAt", sortable: true, format: "dateTime" },
 ];
 
 export default async function ClinicalRecordsPage() {

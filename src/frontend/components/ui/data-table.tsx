@@ -4,6 +4,7 @@ import { useId, useMemo, useState, type ReactNode } from "react";
 import { ChevronDown, ChevronUp, ChevronsUpDown, Search } from "lucide-react";
 import { Button } from "@/frontend/components/ui/button";
 import { EmptyState } from "@/frontend/components/common/EmptyState";
+import { formatDateTime } from "@/frontend/lib/display-date";
 import {
   Select,
   SelectContent,
@@ -45,6 +46,7 @@ export type DataTableColumn<T> = {
   header: string;
   accessor: keyof T;
   sortable?: boolean;
+  format?: "dateTime";
   cell?: (value: T[keyof T], row: T) => ReactNode;
 };
 export type DataTableFilter<T> = {
@@ -289,7 +291,7 @@ export function DataTable<T extends Record<string, unknown>>({
                     <TableCell key={column.id}>
                       {column.cell
                         ? column.cell(row[column.accessor], row)
-                        : String(row[column.accessor] ?? "")}
+                        : column.format === "dateTime" ? formatDateTime(String(row[column.accessor] ?? "")) : String(row[column.accessor] ?? "")}
                     </TableCell>
                   ))}
                 </TableRow>
@@ -301,7 +303,7 @@ export function DataTable<T extends Record<string, unknown>>({
         </Table>
       </div>
       <div className="space-y-3 md:hidden">
-        {visibleRows.length ? visibleRows.map((row, rowIndex) => <article key={getRowId?.(row) ?? rowIndex} className="rounded-lg border border-primary-border bg-white p-4 shadow-sm"><dl className="space-y-3">{columns.map((column) => <div key={column.id} className="grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] items-start gap-3 border-b border-primary-border/60 pb-3 last:border-0 last:pb-0"><dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">{column.header}</dt><dd className="min-w-0 text-right text-sm text-slate-800">{column.cell ? column.cell(row[column.accessor], row) : String(row[column.accessor] ?? "")}</dd></div>)}</dl></article>) : <div className="rounded-lg border border-primary-border bg-white"><EmptyState title={`No se encontraron ${rowLabel}`} action={hasFilters && <Button variant="ghost" className="mt-2" onClick={clearFilters}>Restablecer búsqueda</Button>} /></div>}
+        {visibleRows.length ? visibleRows.map((row, rowIndex) => <article key={getRowId?.(row) ?? rowIndex} className="rounded-lg border border-primary-border bg-white p-4 shadow-sm"><dl className="space-y-3">{columns.map((column) => <div key={column.id} className="grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] items-start gap-3 border-b border-primary-border/60 pb-3 last:border-0 last:pb-0"><dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">{column.header}</dt><dd className="min-w-0 text-right text-sm text-slate-800">{column.cell ? column.cell(row[column.accessor], row) : column.format === "dateTime" ? formatDateTime(String(row[column.accessor] ?? "")) : String(row[column.accessor] ?? "")}</dd></div>)}</dl></article>) : <div className="rounded-lg border border-primary-border bg-white"><EmptyState title={`No se encontraron ${rowLabel}`} action={hasFilters && <Button variant="ghost" className="mt-2" onClick={clearFilters}>Restablecer búsqueda</Button>} /></div>}
       </div>
       <div className="flex flex-col gap-4 border-t border-primary-border pt-4 text-sm text-slate-600 xl:flex-row xl:items-center xl:justify-between">
         <p role="status" aria-live="polite" aria-atomic="true">
