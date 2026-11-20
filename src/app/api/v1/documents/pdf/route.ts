@@ -2,7 +2,7 @@ import PDFDocument from "pdfkit";
 import { z } from "zod";
 import { requireApiUser } from "@/frontend/lib/session";
 import { readJson } from "../../_http";
-import { toHttpError } from "@/backend/errors";
+import { mapPdfError } from "@/backend/modules/documents/pdf-errors";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -117,7 +117,11 @@ export function POST(request: Request) {
       const pdf = await createPdf(input);
       return new Response(new Uint8Array(pdf), { headers: { "Content-Type": "application/pdf", "Content-Disposition": "attachment; filename=sonrisa-digital.pdf" } });
     } catch (error) {
-      const mapped = toHttpError(error);
+      const mapped = mapPdfError(error);
+      if (mapped.code === "PDF_GENERATION_FAILED") {
+        const code = typeof error === "object" && error !== null && "code" in error && typeof error.code === "string" ? error.code : undefined;
+        console.error("PDF generation failed", { code });
+      }
       return Response.json({ error: { code: mapped.code, message: mapped.message } }, { status: mapped.status });
     }
   })();
