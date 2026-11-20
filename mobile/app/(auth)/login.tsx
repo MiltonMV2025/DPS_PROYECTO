@@ -8,40 +8,42 @@ import {
   View,
 } from "react-native";
 import { Redirect, router } from "expo-router";
-import { useAuth } from "@/auth/AuthProvider";
-import {
-  signInWithGoogleFirebase,
-  signOutGoogleFirebase,
-} from "@/auth/google-auth";
-import {
-  logGoogleAuthFailure,
-  logGoogleAuthStage,
-} from "@/auth/google-auth-diagnostics";
+import { useAuth, type GoogleAccount } from "@/auth/AuthProvider";
+import { signOutGoogleFirebase } from "@/auth/google-auth";
 import { getApiErrorMessage } from "@/api/errors";
+import { DateField } from "@/components/DateField";
+import { useToast } from "@/components/ToastProvider";
+import { AppButton, AppCard, AppScreen, colors, uiStyles } from "@/components/ui";
 import {
-  AppButton,
-  AppCard,
-  AppScreen,
-  colors,
-  FieldError,
-  uiStyles,
-} from "@/components/ui";
+  formatPhoneInput,
+  validateBirthDate,
+  validateEmail,
+  validateFullName,
+  validatePhone,
+} from "@/utils/validation";
+
+type Field = "email" | "password" | "name" | "phone" | "birthDate";
+
+const OLDEST_BIRTH_DATE = new Date(1900, 0, 1);
+const DEFAULT_BIRTH_DATE = new Date(2000, 0, 1);
+
+function yesterday() {
+  const date = new Date();
+  date.setDate(date.getDate() - 1);
+  return date;
+}
 
 export default function LoginScreen() {
   const { user, signIn, signInWithGoogle, registerWithGoogle, sessionMessage } =
     useAuth();
+  const toast = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [emailError, setEmailError] = useState<string | undefined>();
-  const [googleAccount, setGoogleAccount] = useState<{
-    idToken: string;
-    email: string;
-    name: string;
-  } | null>(null);
+  const [invalid, setInvalid] = useState<Field[]>([]);
+  const [googleAccount, setGoogleAccount] = useState<GoogleAccount | null>(null);
   const pendingGoogle = useRef(false);
   const registrationCompleted = useRef(false);
   useEffect(
@@ -52,75 +54,71 @@ export default function LoginScreen() {
     },
     [],
   );
+  useEffect(() => {
+    if (sessionMessage)
+      toast({ variant: "info", title: "Sesión finalizada", message: sessionMessage });
+  }, [sessionMessage, toast]);
   if (user) return <Redirect href="/(app)" />;
 
+  /** Marca los campos con error y muestra el primero en un toast. */
+  function reportErrors(errors: [Field, string | undefined][]) {
+    const failed = errors.filter((entry): entry is [Field, string] => Boolean(entry[1]));
+    setInvalid(failed.map(([field]) => field));
+    if (!failed.length) return false;
+    toast({ variant: "error", title: "Revisá los datos ingresados", message: failed[0][1] });
+    return true;
+  }
+
+  function clearInvalid(field: Field) {
+    setInvalid((current) => current.filter((item) => item !== field));
+  }
+
   async function submit() {
-    const normalized = email.trim();
-    const nextEmailError = !normalized
-      ? "Ingresá tu correo electrónico."
-      : !/^\S+@\S+\.\S+$/.test(normalized)
-        ? "Ingresá un correo electrónico válido."
-        : undefined;
-    setEmailError(nextEmailError);
-    if (nextEmailError || !password) {
-      if (!password) setError("Ingresá tu contraseña.");
+    if (
+      reportErrors([
+        ["email", validateEmail(email)],
+        ["password", password ? undefined : "Ingresá tu contraseña."],
+      ])
+    )
       return;
-    }
     setBusy(true);
-    setError(null);
     try {
-      await signIn(normalized, password);
+      await signIn(email.trim(), password);
       router.replace("/(app)");
     } catch (caught) {
-      setError(getApiErrorMessage(caught, "No pudimos iniciar sesión."));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function submitGoogle() {
-    setBusy(true);
-    setError(null);
-    try {
-      if (await signInWithGoogle()) router.replace("/(app)");
-    } catch (caught) {
-      setError(
-        getApiErrorMessage(caught, "No pudimos iniciar sesión con Google."),
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function startGoogleRegistration() {
-    setBusy(true);
-    setError(null);
-    try {
-      const account = await signInWithGoogleFirebase();
-      if (!account) return;
-      let idToken: string;
-      try {
-        idToken = await account.getIdToken();
-        logGoogleAuthStage("firebase_id_token");
-      } catch (tokenError) {
-        logGoogleAuthFailure("firebase_id_token", tokenError);
-        throw tokenError;
-      }
-      pendingGoogle.current = true;
-      registrationCompleted.current = false;
-      setGoogleAccount({
-        idToken,
-        email: account.email ?? "",
-        name: account.displayName ?? "",
+      toast({
+        variant: "error",
+        title: "No pudimos iniciar sesión",
+        message: getApiErrorMessage(caught, "Intentá nuevamente."),
       });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function continueWithGoogle() {
+    setBusy(true);
+    setInvalid([]);
+    try {
+      const result = await signInWithGoogle();
+      if (result.status === "signed-in") router.replace("/(app)");
+      if (result.status === "needs-registration") {
+        pendingGoogle.current = true;
+        registrationCompleted.current = false;
+        setGoogleAccount(result.account);
+        toast({
+          variant: "info",
+          title: "Completá tu registro",
+          message:
+            "No encontramos una cuenta con este correo. Ingresá tus datos para crear tu cuenta de paciente.",
+        });
+      }
     } catch (caught) {
-      await signOutGoogleFirebase();
-      setError(
-        getApiErrorMessage(
-          caught,
-          "No pudimos iniciar el registro con Google.",
-        ),
-      );
+      toast({
+        variant: "error",
+        title: "No pudimos continuar con Google",
+        message: getApiErrorMessage(caught, "Intentá nuevamente."),
+      });
     } finally {
       setBusy(false);
     }
@@ -128,22 +126,34 @@ export default function LoginScreen() {
 
   async function submitGoogleRegistration() {
     if (!googleAccount) return;
+    if (
+      reportErrors([
+        ["name", validateFullName(googleAccount.name)],
+        ["phone", validatePhone(phone)],
+        ["birthDate", validateBirthDate(birthDate)],
+      ])
+    )
+      return;
     setBusy(true);
-    setError(null);
     try {
       await registerWithGoogle({
         idToken: googleAccount.idToken,
         nombre: googleAccount.name.trim(),
-        telefono: phone.trim(),
-        fechaNacimiento: birthDate.trim(),
+        telefono: formatPhoneInput(phone),
+        fechaNacimiento: birthDate,
       });
       registrationCompleted.current = true;
       pendingGoogle.current = false;
+      toast({ variant: "success", title: "Cuenta creada", message: "Ya podés solicitar tus citas desde la aplicación." });
       router.replace("/(app)");
     } catch (caught) {
       pendingGoogle.current = false;
       setGoogleAccount(null);
-      setError(getApiErrorMessage(caught, "No pudimos crear la cuenta."));
+      toast({
+        variant: "error",
+        title: "No pudimos crear la cuenta",
+        message: getApiErrorMessage(caught, "Intentá nuevamente."),
+      });
     } finally {
       setBusy(false);
     }
@@ -152,8 +162,11 @@ export default function LoginScreen() {
   async function cancelGoogleRegistration() {
     pendingGoogle.current = false;
     setGoogleAccount(null);
+    setInvalid([]);
     await signOutGoogleFirebase();
   }
+
+  const isInvalid = (field: Field) => invalid.includes(field);
 
   return (
     <KeyboardAvoidingView
@@ -169,11 +182,6 @@ export default function LoginScreen() {
           <Text style={styles.title}>
             {googleAccount ? "Completar registro" : "Ingresá a tu cuenta"}
           </Text>
-          {(error || sessionMessage) && (
-            <Text accessibilityRole="alert" style={styles.formError}>
-              {error ?? sessionMessage}
-            </Text>
-          )}
           {googleAccount ? (
             <>
               <Text style={uiStyles.label}>Correo de Google</Text>
@@ -182,10 +190,11 @@ export default function LoginScreen() {
                 <Text style={uiStyles.label}>Nombre completo</Text>
                 <TextInput
                   value={googleAccount.name}
-                  onChangeText={(name) =>
-                    setGoogleAccount({ ...googleAccount, name })
-                  }
-                  style={uiStyles.input}
+                  onChangeText={(name) => {
+                    setGoogleAccount({ ...googleAccount, name });
+                    clearInvalid("name");
+                  }}
+                  style={[uiStyles.input, isInvalid("name") && uiStyles.inputInvalid]}
                   editable={!busy}
                   autoComplete="name"
                 />
@@ -194,25 +203,31 @@ export default function LoginScreen() {
                 <Text style={uiStyles.label}>Teléfono</Text>
                 <TextInput
                   value={phone}
-                  onChangeText={setPhone}
-                  style={uiStyles.input}
+                  onChangeText={(value) => {
+                    setPhone(formatPhoneInput(value));
+                    clearInvalid("phone");
+                  }}
+                  style={[uiStyles.input, isInvalid("phone") && uiStyles.inputInvalid]}
                   editable={!busy}
                   keyboardType="phone-pad"
                   autoComplete="tel"
+                  placeholder="7455-6612"
+                  maxLength={9}
                 />
               </View>
-              <View>
-                <Text style={uiStyles.label}>
-                  Fecha de nacimiento (AAAA-MM-DD)
-                </Text>
-                <TextInput
-                  value={birthDate}
-                  onChangeText={setBirthDate}
-                  style={uiStyles.input}
-                  editable={!busy}
-                  placeholder="2000-01-31"
-                />
-              </View>
+              <DateField
+                label="Fecha de nacimiento"
+                value={birthDate}
+                onChange={(value) => {
+                  setBirthDate(value);
+                  clearInvalid("birthDate");
+                }}
+                minimumDate={OLDEST_BIRTH_DATE}
+                maximumDate={yesterday()}
+                initialDate={DEFAULT_BIRTH_DATE}
+                disabled={busy}
+                invalid={isInvalid("birthDate")}
+              />
               <AppButton
                 title="Crear cuenta"
                 onPress={submitGoogleRegistration}
@@ -236,13 +251,11 @@ export default function LoginScreen() {
                   value={email}
                   onChangeText={(value) => {
                     setEmail(value);
-                    setEmailError(undefined);
-                    setError(null);
+                    clearInvalid("email");
                   }}
-                  style={[uiStyles.input, emailError && uiStyles.inputInvalid]}
+                  style={[uiStyles.input, isInvalid("email") && uiStyles.inputInvalid]}
                   editable={!busy}
                 />
-                <FieldError message={emailError} />
               </View>
               <View>
                 <Text style={uiStyles.label}>Contraseña</Text>
@@ -252,17 +265,10 @@ export default function LoginScreen() {
                   value={password}
                   onChangeText={(value) => {
                     setPassword(value);
-                    setError(null);
+                    clearInvalid("password");
                   }}
-                  style={uiStyles.input}
+                  style={[uiStyles.input, isInvalid("password") && uiStyles.inputInvalid]}
                   editable={!busy}
-                />
-                <FieldError
-                  message={
-                    !password && error === "Ingresá tu contraseña."
-                      ? error
-                      : undefined
-                  }
                 />
               </View>
               <AppButton
@@ -273,13 +279,7 @@ export default function LoginScreen() {
               <AppButton
                 title="Continuar con Google"
                 variant="secondary"
-                onPress={submitGoogle}
-                loading={busy}
-              />
-              <AppButton
-                title="Crear cuenta con Google"
-                variant="secondary"
-                onPress={startGoogleRegistration}
+                onPress={continueWithGoogle}
                 loading={busy}
               />
             </>
@@ -301,13 +301,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "700",
     marginBottom: 4,
-  },
-  formError: {
-    color: colors.danger,
-    backgroundColor: colors.dangerBackground,
-    borderRadius: 10,
-    padding: 12,
-    lineHeight: 19,
   },
   googleEmail: { color: colors.muted, paddingVertical: 8 },
 });

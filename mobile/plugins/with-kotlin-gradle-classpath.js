@@ -1,3 +1,5 @@
+// Expo carga los config plugins con require(), así que este archivo debe ser CommonJS.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { withProjectBuildGradle } = require("@expo/config-plugins");
 
 const KOTLIN_GRADLE_PLUGIN =

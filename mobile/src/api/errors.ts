@@ -2,6 +2,12 @@ import axios from "axios";
 
 type ApiErrorPayload = { error?: { code?: string; message?: string } };
 
+export function getApiErrorCode(error: unknown) {
+  return axios.isAxiosError<ApiErrorPayload>(error)
+    ? error.response?.data?.error?.code
+    : undefined;
+}
+
 export function getApiErrorMessage(
   error: unknown,
   fallback = "No pudimos completar la solicitud.",
@@ -30,6 +36,13 @@ export function getApiErrorMessage(
   if (status === 401 && apiError?.code === "INVALID_CREDENTIALS")
     return apiError.message ?? "Correo o contraseña incorrectos.";
   if (status === 401) return "Tu sesión expiró. Iniciá sesión nuevamente.";
+  if (
+    status === 403 &&
+    (apiError?.code === "MOBILE_ROLE_NOT_ALLOWED" ||
+      apiError?.code === "ACCOUNT_DISABLED") &&
+    apiError.message
+  )
+    return apiError.message;
   if (status === 403)
     return "Tu cuenta no tiene permisos para realizar esta acción.";
   if (status === 404) return "No encontramos la información solicitada.";

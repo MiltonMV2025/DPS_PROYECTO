@@ -5,6 +5,7 @@ import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { createAppointment, getAvailability, listDentists } from "@/api/appointments";
 import { getApiErrorMessage } from "@/api/errors";
 import { Calendar } from "@/components/Calendar";
+import { useToast } from "@/components/ToastProvider";
 import { AppButton, AppCard, AppScreen, colors, EmptyState, ErrorState, LoadingState, SectionHeader, uiStyles } from "@/components/ui";
 import type { Dentist } from "@/types/api";
 import { formatDate, formatSlotDateTime, formatSlotTime, parseDateKey } from "@/utils/format";
@@ -15,6 +16,7 @@ const STEPS = ["Odontólogo", "Duración", "Fecha", "Horario", "Motivo"];
 
 export default function BookAppointmentScreen() {
   const client = useQueryClient();
+  const toast = useToast();
   const [step, setStep] = useState(0);
   const [dentist, setDentist] = useState<Dentist | null>(null);
   const [date, setDate] = useState("");
@@ -37,6 +39,7 @@ export default function BookAppointmentScreen() {
       setSuccess(true);
       setSelected(null);
     },
+    onError: (error) => toast({ variant: "error", title: "No pudimos enviar la solicitud", message: getApiErrorMessage(error, "Intentá nuevamente.") }),
   });
 
   function resetForm() {
@@ -108,7 +111,6 @@ export default function BookAppointmentScreen() {
           <Text style={styles.confirmation}>Horario: {formatSlotTime(selected.start)} - {formatSlotTime(selected.end)} ({duration} min)</Text>
         </View>
         <AppButton title="Enviar solicitud" loading={create.isPending} onPress={() => create.mutate()} />
-        {create.isError && <Text style={styles.error}>{getApiErrorMessage(create.error, "No pudimos enviar la solicitud.")}</Text>}
       </>}
     </AppCard>
     {step > 0 && <AppButton title="Volver" variant="secondary" onPress={() => setStep((current) => current - 1)} />}
@@ -130,5 +132,4 @@ const styles = StyleSheet.create({
   confirmation: { color: colors.info, lineHeight: 20 },
   successTitle: { color: colors.success, fontSize: 20, fontWeight: "800" },
   successText: { color: colors.muted, lineHeight: 21 },
-  error: { color: colors.danger, marginTop: 8 },
 });
