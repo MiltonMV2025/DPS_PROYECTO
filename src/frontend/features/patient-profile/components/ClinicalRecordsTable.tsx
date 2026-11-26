@@ -3,17 +3,11 @@
 import { DataTable, type DataTableColumn } from "@/frontend/components/ui/data-table";
 import { Badge } from "@/frontend/components/ui/badge";
 import type { PatientClinicalRecord } from "@/backend/modules/patient-profile/profile.types";
+import { formatDateTime } from "@/frontend/lib/display-date";
 
 type ClinicalRecordsTableProps = {
   records: PatientClinicalRecord[];
 };
-
-function formatDate(value: string) {
-  return new Date(value).toLocaleString("es-SV", {
-    dateStyle: "short",
-    timeStyle: "short",
-  });
-}
 
 const statusLabels: Record<string, { label: string; variant: "success" | "info" | "error" }> = {
   pendiente: { label: "Pendiente", variant: "info" },
@@ -28,7 +22,7 @@ const clinicalColumns: DataTableColumn<PatientClinicalRecord>[] = [
     header: "Fecha de cita",
     accessor: "appointmentDate",
     sortable: false,
-    cell: (value) => formatDate(String(value)),
+    cell: (value) => formatDateTime(String(value)),
   },
   {
     id: "dentist",
@@ -83,7 +77,7 @@ const clinicalColumns: DataTableColumn<PatientClinicalRecord>[] = [
     header: "Registrado",
     accessor: "createdAt",
     sortable: false,
-    cell: (value) => formatDate(String(value)),
+    cell: (value) => formatDateTime(String(value)),
   },
 ];
 

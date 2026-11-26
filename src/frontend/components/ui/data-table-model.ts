@@ -1,6 +1,33 @@
 export const pageSizeOptions = [25, 50, 100] as const;
 export type PageSize = (typeof pageSizeOptions)[number];
 export type SortDirection = "asc" | "desc";
+export type DataTableFilterKind = "exact" | "recent";
+
+const dayInMs = 24 * 60 * 60 * 1000;
+
+/**
+ * Indica si el valor de una celda cumple la opción elegida en un filtro.
+ * - "exact" (por defecto): la celda debe ser igual al valor de la opción.
+ * - "recent": la celda es una fecha ISO y el valor de la opción es la cantidad
+ *   de días hacia atrás desde ahora (por ejemplo "30" = últimos 30 días).
+ */
+export function matchesFilterValue(
+  cell: unknown,
+  value: string,
+  kind: DataTableFilterKind = "exact",
+  now: number = Date.now(),
+) {
+  if (kind === "recent") {
+    const days = Number(value);
+    const time = new Date(String(cell)).getTime();
+    return (
+      Number.isFinite(days) &&
+      Number.isFinite(time) &&
+      now - time <= days * dayInMs
+    );
+  }
+  return String(cell) === value;
+}
 
 export function getTablePage<T>(
   rows: readonly T[],

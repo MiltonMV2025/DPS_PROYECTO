@@ -35,7 +35,7 @@ export function createAuthService(repository: AuthRepository = createAuthReposit
 
     async login(input: LoginInput): Promise<SessionUser> {
       const user = await repository.findByEmail(input.correo);
-      if (!user || !(await verifyPassword(input.password, user.passwordHash))) {
+      if (!user || !user.passwordHash || !(await verifyPassword(input.password, user.passwordHash))) {
         throw new ApplicationError("INVALID_CREDENTIALS", "Correo o contraseña incorrectos.", 401);
       }
       if (!user.activo) {

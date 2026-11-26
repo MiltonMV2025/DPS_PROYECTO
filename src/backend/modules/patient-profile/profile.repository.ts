@@ -1,4 +1,4 @@
-import type { Pool, RowDataPacket } from "mysql2/promise";
+import type { Pool, ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { getDatabasePool } from "@/backend/database/pool";
 import type { PatientProfile, PatientClinicalRecord } from "./profile.types";
 
@@ -26,6 +26,14 @@ export function createPatientProfileRepository(pool: Pool = getDatabasePool()) {
       );
       const records: PatientClinicalRecord[] = recordRows.map((record) => ({ id: Number(record.id_historial), appointmentDate: record.fecha_hora instanceof Date ? record.fecha_hora.toISOString() : String(record.fecha_hora), dentist: String(record.dentist_name), reason: record.motivo == null ? null : String(record.motivo), durationMin: Number(record.duracion_min), appointmentStatus: String(record.estado), diagnosis: String(record.diagnostico), treatment: String(record.tratamiento), observations: record.observaciones == null ? null : String(record.observaciones), prescription: record.receta == null ? null : String(record.receta), recommendations: record.recomendaciones == null ? null : String(record.recomendaciones), createdAt: record.creado_en instanceof Date ? record.creado_en.toISOString() : String(record.creado_en) }));
       return { name: String(row.nombre), email: String(row.correo), phone: String(row.telefono), birthDate: String(row.fecha_nacimiento), allergies: row.alergias == null ? null : String(row.alergias), records };
+    },
+
+    async updateByUserId(userId: number, input: { telefono: string; alergias: string | null }): Promise<boolean> {
+      const [result] = await pool.query<ResultSetHeader>(
+        "UPDATE Pacientes SET telefono = ?, alergias = ? WHERE id_usuario = ?",
+        [input.telefono, input.alergias, userId],
+      );
+      return result.affectedRows > 0;
     },
   };
 }

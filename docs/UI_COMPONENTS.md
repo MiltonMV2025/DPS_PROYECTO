@@ -26,6 +26,10 @@ El dashboard muestra **análisis primero y tabla después**, ambos a ancho compl
 </Alert>
 ```
 
+### Filtros del `DataTable`
+
+Cada filtro se declara como `{ id, label, accessor, options, kind? }` y se muestra con `Select`. Por defecto (`kind: "exact"`) compara la celda con el valor de la opción. Con `kind: "recent"` la celda debe ser una fecha ISO y el valor de cada opción son los días hacia atrás desde hoy (`"7"`, `"30"`, ...). Ambos son serializables, por lo que pueden armarse en páginas de servidor. Ejemplo real: `src/frontend/features/clinical-records/clinical-record-filters.ts` (historiales: paciente, tipo de tratamiento y fecha).
+
 ## Estilo y dependencias
 
 - `components.json` configura aliases del monolito. No ejecutar un `init` que sustituya la estructura ni actualizar Next/Tailwind para añadir componentes.
