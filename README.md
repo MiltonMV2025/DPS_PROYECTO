@@ -1,8 +1,16 @@
 # Sonrisa Digital
 
 Sistema web de gestión para la clínica dental Sonrisa Perfecta, construido con
-Next.js (App Router) y MySQL. Corresponde a la Etapa 2 del proyecto de cátedra
-de DPS941.
+Next.js (App Router) y MySQL. Este proyecto corresponde a la **Actividad 4 —
+Entrega final** de la asignatura DPS941.
+
+## Entrega académica
+
+| Campo | Información |
+|---|---|
+| Actividad | Actividad 4 |
+| Entrega | Final |
+| Video de entrega final | _https://youtu.be/chpuar17Jj0_ |
 
 ## Requisitos
 
